@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="과학, 수학, 정보 교과의 교육 환경 개선과 조합원의 권익 보호를 위한 과수정 노동조합 공식 웹사이트"
+    />
+    <title>과수정 노동조합</title>
+    <!-- Pretendard CDN: 정적 사이트에서 별도 설치 없이 한국어 웹폰트를 적용합니다. -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+    <link rel="stylesheet" href="css/style.css" />
+    <script src="js/main.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문으로 바로가기</a>
+
+    <!-- Sidebar -->
+    <aside class="site-sidebar" aria-label="사이트 사이드바">
+      <a class="site-logo" href="#home" aria-label="과수정 노동조합 홈으로 이동">
+        <span class="site-logo__line site-logo__line--primary" aria-hidden="true">
+          <span>과</span>
+          <span>수</span>
+          <span>정</span>
+        </span>
+        <span class="site-logo__line site-logo__line--secondary" aria-hidden="true">
+          <span>노</span>
+          <span>동</span>
+          <span>조</span>
+          <span>합</span>
+        </span>
+      </a>
+
+      <button class="site-menu-button" type="button" aria-label="메뉴 열기" aria-controls="site-nav" aria-expanded="false">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </button>
+
+      <nav class="site-nav" id="site-nav" aria-label="주요 메뉴">
+        <ul class="site-nav__list">
+          <li><a class="site-nav__link is-active" href="#home" data-section="home">홈</a></li>
+          <li><a class="site-nav__link" href="#notice" data-section="notice">공지사항</a></li>
+          <li><a class="site-nav__link" href="#activity" data-section="activity">활동</a></li>
+          <li><a class="site-nav__link" href="#resources" data-section="resources">자료실</a></li>
+          <li><a class="site-nav__link" href="#about" data-section="about">조합소개</a></li>
+          <li><a class="site-nav__link" href="#contact" data-section="contact">문의</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main class="site-main" id="main">
+      <!-- Home Section -->
+      <section class="section section--home" id="home" aria-labelledby="home-title">
+        <div class="hero glass-panel">
+          <span class="hero__dot" aria-hidden="true"></span>
+          <div class="hero__content">
+            <h1 class="hero__title" id="home-title">
+              <span>과학.</span>
+              <span>수학.</span>
+              <span>정보.</span>
+            </h1>
+            <p class="hero__subtitle">우리의 권리, 우리의 연대.</p>
+            <p class="hero__copy">
+              과학, 수학, 정보 교과의 교육 환경 개선과 조합원의 권익 보호를 위해 함께 행동합니다.
+            </p>
+          </div>
+          <div class="hero__visual" aria-hidden="true">
+            <span>SCI</span>
+            <span>MATH</span>
+            <span>INFO</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Notice Section -->
+      <section class="section" id="notice" aria-labelledby="notice-title">
+        <div class="section-panel glass-panel">
+          <div class="section-panel__header">
+            <span class="section-panel__bar" aria-hidden="true"></span>
+            <h2 class="section-panel__title" id="notice-title">공지사항</h2>
+          </div>
+          <div class="notice-list" id="notice-list" role="list"></div>
+        </div>
+      </section>
+
+      <!-- Activity Section -->
+      <section class="section" id="activity" aria-labelledby="activity-title">
+        <div class="section-panel glass-panel">
+          <div class="section-panel__header">
+            <span class="section-panel__bar" aria-hidden="true"></span>
+            <h2 class="section-panel__title" id="activity-title">활동</h2>
+          </div>
+          <div class="card-grid card-grid--three" id="activity-list"></div>
+        </div>
+      </section>
+
+      <!-- Resources Section -->
+      <section class="section" id="resources" aria-labelledby="resources-title">
+        <div class="section-panel glass-panel">
+          <div class="section-panel__header">
+            <span class="section-panel__bar" aria-hidden="true"></span>
+            <h2 class="section-panel__title" id="resources-title">자료실</h2>
+          </div>
+          <div class="card-grid card-grid--four" id="resources-list"></div>
+        </div>
+      </section>
+
+      <!-- About Section -->
+      <section class="section" id="about" aria-labelledby="about-title">
+        <div class="section-panel glass-panel">
+          <div class="section-panel__header">
+            <span class="section-panel__bar" aria-hidden="true"></span>
+            <h2 class="section-panel__title" id="about-title">조합소개</h2>
+          </div>
+          <div class="info-grid" id="about-list"></div>
+        </div>
+      </section>
+
+      <!-- Contact Section -->
+      <section class="section" id="contact" aria-labelledby="contact-title">
+        <div class="section-panel glass-panel">
+          <div class="section-panel__header">
+            <span class="section-panel__bar" aria-hidden="true"></span>
+            <h2 class="section-panel__title" id="contact-title">문의</h2>
+          </div>
+          <div class="card-grid card-grid--three" id="contact-list"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+      <div class="site-footer__office">
+        <strong>과수정 노동조합 사무실</strong>
+        <address>
+          서울특별시 00구 00로 00 0000빌딩 000호<br />
+          T. 02-000-0000&nbsp;&nbsp;&nbsp;&nbsp; E. smi.union@example.com
+        </address>
+      </div>
+      <p class="site-footer__copyright">© 2024 과수정 노동조합. ALL RIGHTS RESERVED.</p>
+      <div class="site-footer__sns" aria-label="SNS 링크">
+        <strong>SNS</strong>
+        <ul>
+          <li><a href="#" aria-label="Instagram">Instagram</a></li>
+          <li><a href="#" aria-label="Facebook">Facebook</a></li>
+          <li><a href="#" aria-label="YouTube">YouTube</a></li>
+        </ul>
+      </div>
+    </footer>
+
+    <button class="back-to-top" type="button" id="back-to-top" aria-label="페이지 맨 위로 이동">
+      ↑
+    </button>
+  </body>
+</html>
