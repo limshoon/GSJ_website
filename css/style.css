@@ -10,7 +10,7 @@
   --shadow-glass: 0 20px 60px rgba(1, 61, 253, 0.08);
   --radius-panel: 24px;
   --radius-card: 16px;
-  --sidebar-width: 180px;
+  --sidebar-width: 220px;
   --content-width: 1120px;
   --space-page-x: 32px;
   --space-page-y: 28px;
@@ -103,8 +103,8 @@ address {
 .site-logo {
   display: inline-flex;
   flex-direction: column;
-  width: 4.05em;
-  font-size: 28px;
+  width: 6em;
+  font-size: 24px;
   font-weight: var(--font-weight-extra-bold);
   line-height: 1.08;
 }
@@ -112,14 +112,15 @@ address {
 .site-logo__line {
   display: flex;
   width: 100%;
-  justify-content: space-between;
 }
 
 .site-logo__line--primary {
+  justify-content: space-between;
   color: var(--color-primary);
 }
 
 .site-logo__line--secondary {
+  justify-content: flex-start;
   color: var(--color-text);
 }
 
@@ -644,7 +645,7 @@ address {
 /* Responsive */
 @media (max-width: 1040px) {
   :root {
-    --sidebar-width: 140px;
+    --sidebar-width: 170px;
     --space-page-x: 22px;
   }
 
@@ -654,7 +655,7 @@ address {
   }
 
   .site-logo {
-    font-size: 23px;
+    font-size: 20px;
   }
 
   .site-main {
