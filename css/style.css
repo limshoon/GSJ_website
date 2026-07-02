@@ -478,6 +478,95 @@ address {
   color: var(--color-muted);
 }
 
+/* Static Content Pages */
+.section--page {
+  min-height: calc(100vh - var(--space-page-y));
+}
+
+.page-panel {
+  display: grid;
+  gap: 30px;
+  padding: 42px;
+}
+
+.page-header {
+  display: grid;
+  gap: 18px;
+  max-width: 720px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 48px;
+  font-weight: var(--font-weight-extra-bold);
+  line-height: 1.05;
+}
+
+.page-copy {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+.page-list {
+  display: grid;
+  gap: 18px;
+}
+
+.notice-entry {
+  display: grid;
+  gap: 12px;
+  padding: 24px 0;
+  border-bottom: 1px solid rgba(1, 61, 253, 0.13);
+}
+
+.notice-entry:first-child {
+  padding-top: 0;
+}
+
+.notice-entry:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.notice-entry__date {
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: var(--font-weight-bold);
+}
+
+.notice-entry__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.35;
+}
+
+.notice-entry__body {
+  max-width: 760px;
+  margin: 0;
+  color: var(--color-text);
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.activity-page-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.resources-page-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.resource-card__link {
+  display: inline-flex;
+  margin-top: 14px;
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: var(--font-weight-bold);
+}
+
 /* Footer */
 .site-footer {
   display: grid;
@@ -935,6 +1024,60 @@ address {
   .contact-card__sub {
     font-size: 13px;
     line-height: 1.65;
+  }
+
+  .section--page {
+    min-height: auto;
+  }
+
+  .page-panel {
+    gap: 24px;
+    padding: 28px;
+  }
+
+  .page-header {
+    gap: 14px;
+  }
+
+  .page-title {
+    font-size: 30px;
+    line-height: 1.15;
+  }
+
+  .page-copy {
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .notice-entry {
+    gap: 10px;
+    padding: 22px 0;
+  }
+
+  .notice-entry__date {
+    font-size: 13px;
+  }
+
+  .notice-entry__title {
+    font-size: 18px;
+  }
+
+  .notice-entry__body {
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .activity-page-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .resources-page-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .resource-card__link {
+    font-size: 13px;
   }
 
   .site-footer {

@@ -175,6 +175,8 @@ function getIcon(name) {
 function renderNotices() {
   const noticeList = document.querySelector("#notice-list");
 
+  if (!noticeList) return;
+
   noticeList.innerHTML = notices
     .map(
       (notice) => `
@@ -190,6 +192,8 @@ function renderNotices() {
 
 function renderActivities() {
   const activityList = document.querySelector("#activity-list");
+
+  if (!activityList) return;
 
   activityList.innerHTML = activities
     .map(
@@ -212,6 +216,8 @@ function renderActivities() {
 function renderResources() {
   const resourceList = document.querySelector("#resources-list");
 
+  if (!resourceList) return;
+
   resourceList.innerHTML = resources
     .map(
       (resource) => `
@@ -228,6 +234,8 @@ function renderResources() {
 function renderAboutItems() {
   const aboutList = document.querySelector("#about-list");
 
+  if (!aboutList) return;
+
   aboutList.innerHTML = aboutItems
     .map(
       (item) => `
@@ -243,6 +251,8 @@ function renderAboutItems() {
 
 function renderContactItems() {
   const contactList = document.querySelector("#contact-list");
+
+  if (!contactList) return;
 
   contactList.innerHTML = contactItems
     .map(
@@ -311,6 +321,9 @@ function setActiveNav(sectionId) {
 
 function initScrollSpy() {
   const sections = [...document.querySelectorAll(".section[id]")];
+
+  if (!sections.length) return;
+
   let ticking = false;
 
   const getOffset = () => {
@@ -351,6 +364,8 @@ function initScrollSpy() {
 // Back to top
 function initBackToTop() {
   const backToTop = document.querySelector("#back-to-top");
+
+  if (!backToTop) return;
 
   backToTop.addEventListener("click", () => {
     window.scrollTo({
