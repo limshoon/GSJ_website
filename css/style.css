@@ -103,33 +103,35 @@ address {
 .site-logo {
   display: inline-flex;
   flex-direction: column;
-  width: 7em;
-  gap: 4px;
+  width: fit-content;
+  max-width: 100%;
+  gap: 0;
   font-size: 24px;
   font-weight: var(--font-weight-extra-bold);
   line-height: 1.08;
+  text-align: left;
 }
 
 .site-logo__mark {
-  width: 74px;
-  height: 74px;
-  margin: 0 0 6px;
+  width: 96px;
+  height: 96px;
+  margin: 0 0 20px;
+  align-self: center;
   object-fit: contain;
 }
 
 .site-logo__line {
-  display: flex;
-  width: 100%;
+  display: block;
+  width: auto;
+  letter-spacing: 0;
+  white-space: nowrap;
 }
 
 .site-logo__line--primary {
-  justify-content: flex-start;
-  gap: 0.04em;
   color: var(--color-primary);
 }
 
 .site-logo__line--secondary {
-  justify-content: flex-start;
   color: var(--color-text);
 }
 
@@ -808,8 +810,9 @@ address {
   }
 
   .site-logo__mark {
-    width: 64px;
-    height: 64px;
+    width: 82px;
+    height: 82px;
+    margin-bottom: 16px;
   }
 
   .site-main {
@@ -871,15 +874,14 @@ address {
   }
 
   .site-logo {
-    gap: 2px;
     font-size: 19px;
     line-height: 1.12;
   }
 
   .site-logo__mark {
-    width: 48px;
-    height: 48px;
-    margin-bottom: 2px;
+    width: 56px;
+    height: 56px;
+    margin-bottom: 10px;
   }
 
   .site-menu-button {
