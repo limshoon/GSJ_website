@@ -3,7 +3,9 @@
     "name": "과수정 교원노동조합",
     "description": "과학, 수학, 정보 교과의 교육 환경 개선과 조합원의 권익 보호를 위한 과수정 교원노동조합 공식 웹사이트",
     "officeName": "과수정 교원노동조합 사무실",
-    "addressLines": ["서울특별시 00구 00로 00 0000빌딩 000호"],
+    "addressLines": [
+      "서울특별시 00구 00로 00 0000빌딩 000호"
+    ],
     "phone": "02-000-0000",
     "email": "smi.union@example.com",
     "copyright": "© 2024 과수정 교원노동조합. ALL RIGHTS RESERVED.",
@@ -23,10 +25,18 @@
     ]
   },
   "home": {
-    "titleLines": ["과학.", "수학.", "정보."],
+    "titleLines": [
+      "과학.",
+      "수학.",
+      "정보."
+    ],
     "subtitle": "우리의 권리, 우리의 연대.",
     "copy": "과학, 수학, 정보 교과의 교육 환경 개선과 조합원의 권익 보호를 위해 함께 행동합니다.",
-    "visualWords": ["SCI", "MATH", "INFO"]
+    "visualWords": [
+      "SCI",
+      "MATH",
+      "INFO"
+    ]
   },
   "notices": [
     {
@@ -37,7 +47,8 @@
       "body": "조합원 의견 수렴을 바탕으로 2024년 임금·단체협약 교섭 요구안을 확정했습니다.\n\n세부 교섭 일정과 주요 요구 항목은 확정되는 대로 조합원 안내를 통해 공유하겠습니다.",
       "image": "",
       "attachmentLabel": "첨부 자료 보기",
-      "attachmentUrl": ""
+      "attachmentUrl": "",
+      "icon": "document"
     },
     {
       "id": "regular-meeting-12",
@@ -47,7 +58,8 @@
       "body": "제12차 과수정 교원노동조합 정기총회 일정과 안건을 안내드립니다.\n\n조합원 여러분의 많은 참여를 부탁드리며, 참석이 어려운 경우 위임 절차를 확인해주시기 바랍니다.",
       "image": "",
       "attachmentLabel": "총회 자료 보기",
-      "attachmentUrl": ""
+      "attachmentUrl": "",
+      "icon": "document"
     },
     {
       "id": "education-environment-survey",
@@ -57,7 +69,8 @@
       "body": "과학·수학·정보 교과의 교육 환경 실태 설문조사 주요 결과를 공유합니다.\n\n응답 결과는 향후 교섭 요구와 정책 제안의 기초 자료로 활용할 예정입니다.",
       "image": "",
       "attachmentLabel": "조사 결과 보기",
-      "attachmentUrl": ""
+      "attachmentUrl": "",
+      "icon": "document"
     }
   ],
   "activities": [
@@ -67,7 +80,10 @@
       "title": "교섭 회의 진행",
       "summary": "임금·단체협약 교섭을 위한 제3차 회의를 진행했습니다.",
       "body": "임금·단체협약 교섭을 위한 제3차 회의를 진행했습니다.\n\n조합은 현장의 요구가 교섭 과정에 반영될 수 있도록 계속해서 의견을 모으고 있습니다.",
-      "image": "assets/images/activity-01.jpg"
+      "image": "assets/images/activity-01.jpg",
+      "attachmentLabel": "첨부 자료 보기",
+      "attachmentUrl": "",
+      "icon": "document"
     },
     {
       "id": "education-campaign",
@@ -75,7 +91,10 @@
       "title": "교육 환경 개선 캠페인",
       "summary": "전국 동시 캠페인으로 교육 환경 개선을 촉구했습니다.",
       "body": "전국 동시 캠페인으로 교육 환경 개선을 촉구했습니다.\n\n과학·수학·정보 교과의 안정적인 수업 환경 마련을 위해 현장 의견을 알리는 활동을 이어가겠습니다.",
-      "image": "assets/images/activity-02.jpg"
+      "image": "assets/images/activity-02.jpg",
+      "attachmentLabel": "첨부 자료 보기",
+      "attachmentUrl": "",
+      "icon": "document"
     },
     {
       "id": "member-training",
@@ -83,7 +102,10 @@
       "title": "조합원 교육 연수",
       "summary": "교권 보호와 노동 권리에 대한 연수를 진행했습니다.",
       "body": "교권 보호와 노동 권리에 대한 조합원 교육 연수를 진행했습니다.\n\n연수 자료와 후속 안내는 자료실을 통해 순차적으로 공유할 예정입니다.",
-      "image": "assets/images/activity-03.jpg"
+      "image": "assets/images/activity-03.jpg",
+      "attachmentLabel": "첨부 자료 보기",
+      "attachmentUrl": "",
+      "icon": "document"
     }
   ],
   "resources": [
