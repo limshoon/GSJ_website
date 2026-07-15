@@ -102,37 +102,14 @@ address {
 
 .site-logo {
   display: inline-flex;
-  flex-direction: column;
-  width: fit-content;
+  width: 154px;
   max-width: 100%;
-  gap: 0;
-  font-size: 24px;
-  font-weight: var(--font-weight-extra-bold);
-  line-height: 1.08;
-  text-align: left;
 }
 
-.site-logo__mark {
-  width: 96px;
-  height: 96px;
-  margin: 0 0 20px;
-  align-self: center;
+.site-logo__brand {
+  width: 100%;
+  height: auto;
   object-fit: contain;
-}
-
-.site-logo__line {
-  display: block;
-  width: auto;
-  letter-spacing: 0;
-  white-space: nowrap;
-}
-
-.site-logo__line--primary {
-  color: var(--color-primary);
-}
-
-.site-logo__line--secondary {
-  color: var(--color-text);
 }
 
 .site-menu-button {
@@ -806,13 +783,7 @@ address {
   }
 
   .site-logo {
-    font-size: 20px;
-  }
-
-  .site-logo__mark {
-    width: 82px;
-    height: 82px;
-    margin-bottom: 16px;
+    width: 130px;
   }
 
   .site-main {
@@ -874,14 +845,7 @@ address {
   }
 
   .site-logo {
-    font-size: 19px;
-    line-height: 1.12;
-  }
-
-  .site-logo__mark {
-    width: 56px;
-    height: 56px;
-    margin-bottom: 10px;
+    width: 104px;
   }
 
   .site-menu-button {
