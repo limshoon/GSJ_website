@@ -568,6 +568,13 @@ address {
   font-weight: var(--font-weight-bold);
 }
 
+.empty-state {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
 /* Footer */
 .site-footer {
   display: grid;

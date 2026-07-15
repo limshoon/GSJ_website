@@ -1,4 +1,4 @@
 User-agent: *
-Allow: /GSJ_website/
+Allow: /
 
-Sitemap: https://limshoon.github.io/GSJ_website/sitemap.xml
+Sitemap: https://smitu.kr/sitemap.xml
