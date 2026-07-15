@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex, nofollow" />
     <title>사이트 관리 | 과수정 교원노동조합</title>
+    <link rel="icon" href="../assets/images/gsj-logo.png" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
     <link rel="stylesheet" href="admin.css" />
     <script src="admin.js" defer></script>
@@ -55,10 +56,10 @@
             <p class="eyebrow">Editable Content</p>
             <h2 id="editor-title">사이트 콘텐츠</h2>
           </div>
-          <button class="primary-button" type="button" id="save-button" disabled>저장하고 게시</button>
+          <button class="primary-button" type="button" id="save-button" disabled aria-busy="false">저장하고 게시</button>
         </div>
 
-        <div class="status-message" id="status-message" role="status">
+        <div class="status-message" id="status-message" role="status" aria-live="polite">
           GitHub에 연결하면 현재 콘텐츠를 불러옵니다.
         </div>
 

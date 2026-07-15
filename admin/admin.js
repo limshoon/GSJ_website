@@ -5,10 +5,14 @@ const DEFAULT_REPO = {
   repo: "GSJ_website",
   branch: "main",
 };
+const POST_COLLECTIONS = ["notices", "activities", "resources"];
+const SAVE_RESET_DELAY = 1600;
 
 const blankItems = {
   notices: () => ({
     id: createPostId("notice"),
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
     date: todayText(),
     title: "",
     summary: "",
@@ -19,6 +23,8 @@ const blankItems = {
   }),
   activities: () => ({
     id: createPostId("activity"),
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
     date: todayText(),
     title: "",
     summary: "",
@@ -27,6 +33,8 @@ const blankItems = {
   }),
   resources: () => ({
     id: createPostId("resource"),
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
     date: todayText(),
     title: "",
     summary: "",
@@ -59,6 +67,8 @@ const state = {
   sha: "",
   dirty: false,
   connected: false,
+  highlightedCollection: "",
+  saveResetTimer: null,
 };
 
 const connectionForm = document.querySelector("#connection-form");
@@ -125,11 +135,11 @@ async function handleConnect(event) {
     await loadContentFromGitHub();
     state.connected = true;
     state.dirty = false;
-    saveButton.disabled = false;
+    setSaveButtonState("idle");
     renderEditor();
     setStatus("연결되었습니다. 수정 후 저장하고 게시할 수 있습니다.", "success");
   } catch (error) {
-    saveButton.disabled = true;
+    setSaveButtonState("disabled");
     setStatus(getErrorMessage(error), "error");
   }
 }
@@ -146,8 +156,8 @@ async function handleSave() {
     return;
   }
 
+  setSaveButtonState("saving");
   setStatus("이미지와 자료를 업로드하고 변경 사항을 저장하는 중입니다...");
-  saveButton.disabled = true;
 
   try {
     state.content = readContentFromForm();
@@ -170,11 +180,13 @@ async function handleSave() {
     state.content = normalizeContent(stripPrivateFields(state.content));
     state.dirty = false;
     renderEditor();
-    setStatus("저장되었습니다. GitHub Pages 배포가 끝나면 사이트에 반영됩니다.", "success");
+    setSaveButtonState("success");
+    setStatus("저장되었습니다. 잠시 후 사이트에 자동으로 반영됩니다.", "success");
+    showToast("변경사항이 저장되었습니다.", "success");
   } catch (error) {
+    setSaveButtonState("error");
     setStatus(getErrorMessage(error), "error");
-  } finally {
-    saveButton.disabled = false;
+    showToast("저장 중 오류가 발생했습니다. 다시 시도해 주세요.", "error");
   }
 }
 
@@ -240,7 +252,7 @@ function renderSiteSection(content) {
     <section class="editor-section">
       <div class="section-heading">
         <div>
-          <h3>기본 정보</h3>
+          <h3 class="admin-section-title">기본 정보</h3>
           <p>사이트 이름, 사무실 정보, SNS 링크를 관리합니다.</p>
         </div>
       </div>
@@ -268,7 +280,7 @@ function renderHomeSection(content) {
     <section class="editor-section">
       <div class="section-heading">
         <div>
-          <h3>홈 화면</h3>
+          <h3 class="admin-section-title">홈 화면</h3>
           <p>첫 화면의 큰 문구와 설명을 관리합니다.</p>
         </div>
       </div>
@@ -287,7 +299,7 @@ function renderCollectionSection(key, title, description, items, fields, nested 
     <section class="${nested ? "nested-section" : "editor-section"}" data-wrapper="${key}">
       <div class="section-heading">
         <div>
-          <h3>${escapeHtml(title)}</h3>
+          <h3 class="admin-section-title">${escapeHtml(title)}</h3>
           <p>${escapeHtml(description)}</p>
         </div>
         <button class="secondary-button" type="button" data-action="add" data-collection="${key}">추가</button>
@@ -300,8 +312,10 @@ function renderCollectionSection(key, title, description, items, fields, nested 
 }
 
 function renderCollectionItem(key, item, index, fields) {
+  const highlightClass = state.highlightedCollection === key && index === 0 ? " is-highlighted" : "";
+
   return `
-    <article class="admin-item" data-collection="${key}" data-index="${index}">
+    <article class="admin-item${highlightClass}" data-collection="${key}" data-index="${index}">
       <div class="item-header">
         <h4>${index + 1}. ${escapeHtml(item.title || item.label || "새 항목")}</h4>
         <div class="item-actions">
@@ -380,6 +394,10 @@ function handleEditorClick(event) {
 
   if (!button || !state.content) return;
 
+  if (document.querySelector("#content-form")) {
+    state.content = readContentFromForm({ sortPosts: false });
+  }
+
   const collection = button.dataset.collection;
   const action = button.dataset.action;
   const index = Number(button.dataset.index);
@@ -387,13 +405,20 @@ function handleEditorClick(event) {
 
   if (!items) return;
 
-  if (action === "add") items.push(blankItems[collection]());
+  if (action === "add") {
+    items.unshift(blankItems[collection]());
+    state.highlightedCollection = collection;
+  }
   if (action === "delete") items.splice(index, 1);
   if (action === "up" && index > 0) [items[index - 1], items[index]] = [items[index], items[index - 1]];
   if (action === "down" && index < items.length - 1) [items[index], items[index + 1]] = [items[index + 1], items[index]];
 
   state.dirty = true;
   renderEditor();
+
+  if (action === "add") {
+    focusNewItem(collection);
+  }
 }
 
 function getMutableCollection(collection) {
@@ -406,8 +431,9 @@ function getMutableCollection(collection) {
   return state.content[collection];
 }
 
-function readContentFromForm() {
+function readContentFromForm(options = {}) {
   const form = document.querySelector("#content-form");
+  const { sortPosts = true } = options;
 
   return normalizeContent({
     site: {
@@ -431,7 +457,7 @@ function readContentFromForm() {
     resources: readCollection("resources", postFields("resource")),
     aboutItems: readCollection("aboutItems", ["title", "description", "icon"]),
     contactItems: readCollection("contactItems", ["title", "main", "sub", "icon"]),
-  });
+  }, { sortPosts });
 }
 
 function getSectionValue(form, section, field) {
@@ -443,6 +469,7 @@ function readCollection(collection, fields) {
 
   return [...document.querySelectorAll(`.admin-item[data-collection="${collection}"]`)].map((item, index) => {
     const nextItem = {};
+    const originalItem = state.content?.[collection]?.[index] || {};
 
     normalizedFields.forEach((field) => {
       nextItem[field.name] = item.querySelector(`[data-field="${field.name}"]`)?.value.trim() || "";
@@ -462,6 +489,11 @@ function readCollection(collection, fields) {
         kind: input.dataset.uploadKind || "file",
       };
     });
+
+    if (POST_COLLECTIONS.includes(collection)) {
+      nextItem.createdAt = originalItem.createdAt || originalItem.created_at || nowIso();
+      nextItem.updatedAt = hasPostChanged(originalItem, nextItem) ? nowIso() : originalItem.updatedAt || originalItem.updated_at || nextItem.createdAt;
+    }
 
     return nextItem;
   });
@@ -543,7 +575,8 @@ async function githubRequest(path, options = {}) {
   return response.json();
 }
 
-function normalizeContent(content) {
+function normalizeContent(content, options = {}) {
+  const { sortPosts = true } = options;
   const base = {
     site: {
       name: "",
@@ -583,6 +616,12 @@ function normalizeContent(content) {
   next.activities = next.activities.map((item, index) => normalizePost(item, "activities", index));
   next.resources = next.resources.map((item, index) => normalizePost(item, "resources", index));
 
+  if (sortPosts) {
+    next.notices = sortPostsByLatest(next.notices);
+    next.activities = sortPostsByLatest(next.activities);
+    next.resources = sortPostsByLatest(next.resources);
+  }
+
   if (!Array.isArray(next.site.sns)) next.site.sns = [];
   if (!Array.isArray(next.site.addressLines)) next.site.addressLines = [];
   if (!Array.isArray(next.home.titleLines)) next.home.titleLines = [];
@@ -594,6 +633,8 @@ function normalizeContent(content) {
 function normalizePost(item, collection, index) {
   return {
     id: item.id || createPostId(collection, index),
+    createdAt: item.createdAt || item.created_at || "",
+    updatedAt: item.updatedAt || item.updated_at || "",
     date: item.date || "",
     title: item.title || "",
     summary: item.summary || item.description || item.body || "",
@@ -603,6 +644,52 @@ function normalizePost(item, collection, index) {
     attachmentUrl: item.attachmentUrl || item.link || "",
     icon: item.icon || "document",
   };
+}
+
+function sortPostsByLatest(posts) {
+  return [...posts].sort((a, b) => {
+    const primary = getPostTime(b) - getPostTime(a);
+    if (primary !== 0) return primary;
+
+    const secondary = getDateTime(b.updatedAt || b.updated_at) - getDateTime(a.updatedAt || a.updated_at);
+    if (secondary !== 0) return secondary;
+
+    return String(b.id || "").localeCompare(String(a.id || ""));
+  });
+}
+
+function getPostTime(post) {
+  return getDateTime(post.createdAt || post.created_at || post.date || post.timestamp) || getIdTime(post.id);
+}
+
+function getDateTime(value) {
+  if (!value) return 0;
+
+  const text = String(value).trim();
+  const normalized = text.replace(/[./]/g, "-");
+  const dateOnly = normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+
+  if (dateOnly) {
+    return new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3])).getTime();
+  }
+
+  const parsed = Date.parse(text);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function getIdTime(id) {
+  const match = String(id || "").match(/(\d{10,})/);
+  return match ? Number(match[1]) : 0;
+}
+
+function hasPostChanged(previous, next) {
+  const fields = ["id", "date", "title", "summary", "body", "image", "attachmentLabel", "attachmentUrl", "icon"];
+
+  return Boolean(next._uploads) || fields.some((field) => String(previous?.[field] || "") !== String(next?.[field] || ""));
+}
+
+function nowIso() {
+  return new Date().toISOString();
 }
 
 function todayText() {
@@ -659,6 +746,81 @@ function bytesToBase64(bytes) {
 
 function markDirty() {
   state.dirty = true;
+}
+
+function setSaveButtonState(status = "idle") {
+  window.clearTimeout(state.saveResetTimer);
+  saveButton.classList.remove("is-saving", "is-success", "is-error");
+  saveButton.setAttribute("aria-busy", "false");
+
+  if (status === "disabled") {
+    saveButton.disabled = true;
+    saveButton.textContent = "저장하고 게시";
+    return;
+  }
+
+  if (status === "saving") {
+    saveButton.disabled = true;
+    saveButton.classList.add("is-saving");
+    saveButton.setAttribute("aria-busy", "true");
+    saveButton.innerHTML = `<span class="button-spinner" aria-hidden="true"></span><span>저장 중...</span>`;
+    return;
+  }
+
+  if (status === "success") {
+    saveButton.disabled = true;
+    saveButton.classList.add("is-success");
+    saveButton.innerHTML = `<span aria-hidden="true">✓</span><span>저장 완료</span>`;
+    state.saveResetTimer = window.setTimeout(() => setSaveButtonState("idle"), SAVE_RESET_DELAY);
+    return;
+  }
+
+  if (status === "error") {
+    saveButton.disabled = !state.connected;
+    saveButton.classList.add("is-error");
+    saveButton.textContent = "다시 저장";
+    return;
+  }
+
+  saveButton.disabled = !state.connected;
+  saveButton.textContent = "저장하고 게시";
+}
+
+function focusNewItem(collection) {
+  const firstItem = document.querySelector(`.admin-item[data-collection="${collection}"]`);
+
+  if (!firstItem) return;
+
+  firstItem.scrollIntoView({ behavior: "smooth", block: "center" });
+  firstItem.querySelector("input:not([type='file']), textarea, select")?.focus({ preventScroll: true });
+
+  window.setTimeout(() => {
+    firstItem.classList.remove("is-highlighted");
+    if (state.highlightedCollection === collection) {
+      state.highlightedCollection = "";
+    }
+  }, 1200);
+}
+
+function showToast(message, type = "success") {
+  let toast = document.querySelector("#admin-toast");
+
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "admin-toast";
+    toast.className = "admin-toast";
+    document.body.append(toast);
+  }
+
+  toast.textContent = message;
+  toast.className = `admin-toast is-${type} is-visible`;
+  toast.setAttribute("role", type === "error" ? "alert" : "status");
+  toast.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
+
+  window.clearTimeout(showToast.timer);
+  showToast.timer = window.setTimeout(() => {
+    toast.classList.remove("is-visible");
+  }, 2600);
 }
 
 function setStatus(message, type = "") {

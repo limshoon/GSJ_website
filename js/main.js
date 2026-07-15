@@ -125,9 +125,9 @@ function normalizeContent(content) {
     }
   });
 
-  nextContent.notices = nextContent.notices.map((item, index) => normalizePost(item, "notices", index));
-  nextContent.activities = nextContent.activities.map((item, index) => normalizePost(item, "activities", index));
-  nextContent.resources = nextContent.resources.map((item, index) => normalizePost(item, "resources", index));
+  nextContent.notices = sortPostsByLatest(nextContent.notices.map((item, index) => normalizePost(item, "notices", index)));
+  nextContent.activities = sortPostsByLatest(nextContent.activities.map((item, index) => normalizePost(item, "activities", index)));
+  nextContent.resources = sortPostsByLatest(nextContent.resources.map((item, index) => normalizePost(item, "resources", index)));
 
   if (!Array.isArray(nextContent.site.sns)) nextContent.site.sns = [];
   if (!Array.isArray(nextContent.home.titleLines)) nextContent.home.titleLines = [];
@@ -139,6 +139,8 @@ function normalizeContent(content) {
 function normalizePost(item, collection, index) {
   return {
     id: item.id || makePostId(item, index),
+    createdAt: item.createdAt || item.created_at || "",
+    updatedAt: item.updatedAt || item.updated_at || "",
     date: item.date || "",
     title: item.title || "",
     summary: item.summary || item.description || item.body || "",
@@ -148,6 +150,42 @@ function normalizePost(item, collection, index) {
     attachmentUrl: item.attachmentUrl || item.link || "",
     icon: item.icon || "document",
   };
+}
+
+function sortPostsByLatest(posts) {
+  return [...posts].sort((a, b) => {
+    const primary = getPostTime(b) - getPostTime(a);
+    if (primary !== 0) return primary;
+
+    const secondary = getDateTime(b.updatedAt || b.updated_at) - getDateTime(a.updatedAt || a.updated_at);
+    if (secondary !== 0) return secondary;
+
+    return String(b.id || "").localeCompare(String(a.id || ""));
+  });
+}
+
+function getPostTime(post) {
+  return getDateTime(post.createdAt || post.created_at || post.date || post.timestamp) || getIdTime(post.id);
+}
+
+function getDateTime(value) {
+  if (!value) return 0;
+
+  const text = String(value).trim();
+  const normalized = text.replace(/[./]/g, "-");
+  const dateOnly = normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+
+  if (dateOnly) {
+    return new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3])).getTime();
+  }
+
+  const parsed = Date.parse(text);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function getIdTime(id) {
+  const match = String(id || "").match(/(\d{10,})/);
+  return match ? Number(match[1]) : 0;
 }
 
 async function loadSiteContent() {
