@@ -165,10 +165,11 @@ address {
 }
 
 .section-panel {
+  --section-title-size: 220px;
   display: grid;
-  grid-template-columns: minmax(220px, 20%) minmax(0, 1fr);
+  grid-template-columns: var(--section-title-size) minmax(0, 1fr);
   gap: 28px;
-  align-items: start;
+  align-items: stretch;
   min-height: 190px;
   padding: 30px;
 }
@@ -178,6 +179,7 @@ address {
   flex-direction: column;
   justify-content: flex-end;
   width: 100%;
+  height: var(--section-title-size);
   min-height: 0;
   aspect-ratio: 1 / 1;
   padding: 24px 22px;
@@ -281,6 +283,14 @@ address {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-self: stretch;
+  min-height: 0;
+}
+
+.section-panel > .notice-list,
+.section-panel > .card-grid,
+.section-panel > .info-grid {
+  height: var(--section-title-size);
 }
 
 .notice-list__item {
@@ -288,7 +298,8 @@ address {
   grid-template-columns: 122px minmax(0, 1fr) 32px;
   gap: 24px;
   align-items: center;
-  min-height: 62px;
+  flex: 1;
+  min-height: 0;
   border-bottom: 1px solid rgba(1, 61, 253, 0.13);
   font-weight: var(--font-weight-regular);
 }
@@ -323,6 +334,12 @@ address {
   display: grid;
   gap: 18px;
   align-content: stretch;
+  align-self: stretch;
+  min-height: 0;
+}
+
+.section-panel > .card-grid {
+  grid-auto-rows: minmax(0, 1fr);
 }
 
 .card-grid--three {
@@ -337,6 +354,8 @@ address {
 .resource-card,
 .contact-card {
   min-width: 0;
+  height: 100%;
+  min-height: 0;
   border: 1px solid rgba(1, 61, 253, 0.1);
   border-radius: var(--radius-card);
   background: rgba(255, 255, 255, 0.68);
@@ -354,13 +373,15 @@ address {
 }
 
 .activity-card {
-  display: block;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
 .activity-card__image {
   display: grid;
-  height: 112px;
+  flex: 0 0 96px;
+  height: 96px;
   overflow: hidden;
   background:
     linear-gradient(135deg, rgba(1, 61, 253, 0.18), rgba(5, 5, 5, 0.08)),
@@ -380,6 +401,8 @@ address {
 }
 
 .activity-card__body {
+  flex: 1;
+  min-height: 0;
   padding: 16px 16px 18px;
 }
 
@@ -411,8 +434,18 @@ address {
   line-height: 1.65;
 }
 
+.activity-card__description {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
 .resource-card,
 .contact-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   padding: 22px 22px 24px;
 }
 
@@ -433,10 +466,16 @@ address {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: stretch;
+  align-self: stretch;
+  min-height: 0;
 }
 
 .info-item {
+  display: flex;
+  min-height: 100%;
   min-width: 0;
+  flex-direction: column;
+  justify-content: center;
   padding: 20px 22px;
   border-right: 1px solid rgba(1, 61, 253, 0.14);
   transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
@@ -455,7 +494,7 @@ address {
   display: grid;
   grid-template-columns: 36px minmax(0, 1fr);
   gap: 14px;
-  align-items: start;
+  align-items: center;
   padding-right: 18px;
   padding-left: 18px;
 }
@@ -975,6 +1014,7 @@ address {
 
   .section-panel {
     display: block;
+    --section-title-size: auto;
     min-height: 0;
     padding: 28px;
   }
@@ -985,8 +1025,20 @@ address {
   }
 
   .section-panel__header {
+    height: auto;
+    aspect-ratio: 1 / 1;
     margin-bottom: 24px;
     padding: 22px;
+  }
+
+  .section-panel > .notice-list,
+  .section-panel > .card-grid,
+  .section-panel > .info-grid {
+    height: auto;
+  }
+
+  .section-panel > .card-grid {
+    grid-auto-rows: auto;
   }
 
   .section-panel__bar {
@@ -1041,6 +1093,7 @@ address {
     grid-template-columns: 128px minmax(0, 1fr);
     gap: 16px;
     align-items: start;
+    height: auto;
     border: 0;
     background: transparent;
     box-shadow: none;
