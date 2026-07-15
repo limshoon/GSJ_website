@@ -40,6 +40,17 @@
   },
   "notices": [
     {
+      "id": "notice-1784102871330",
+      "date": "2026.07.15",
+      "title": "TEST 냥냥",
+      "summary": "TEST 냥냥",
+      "body": "TEST 냥냥",
+      "image": "",
+      "attachmentLabel": "첨부 자료 보기",
+      "attachmentUrl": "",
+      "icon": "document"
+    },
+    {
       "id": "wage-agreement-2024",
       "date": "2024.05.20",
       "title": "2024년 임금·단체협약 교섭 요구안 확정",
