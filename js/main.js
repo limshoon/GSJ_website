@@ -21,114 +21,29 @@ const fallbackContent = {
     copy: "과학, 수학, 정보 교과의 교육 환경 개선과 조합원의 권익 보호를 위해 함께 행동합니다.",
     visualWords: ["SCI", "MATH", "INFO"],
   },
-  notices: [
-    {
-      date: "2024.05.20",
-      title: "2024년 임금·단체협약 교섭 요구안 확정",
-      body: "조합원 의견 수렴을 바탕으로 2024년 임금·단체협약 교섭 요구안을 확정했습니다.",
-      link: "notice.html",
-    },
-    {
-      date: "2024.05.10",
-      title: "제12차 과수정 교원노동조합 정기총회 안내",
-      body: "정기총회 일정과 안건을 안내드립니다. 조합원 여러분의 많은 참여를 부탁드립니다.",
-      link: "notice.html",
-    },
-    {
-      date: "2024.04.28",
-      title: "과수정 교과 연구·교육 환경 실태 설문조사 결과",
-      body: "과학·수학·정보 교과의 교육 환경 실태 설문조사 주요 결과를 공유합니다.",
-      link: "notice.html",
-    },
-  ],
-  activities: [
-    {
-      date: "2024.05.18",
-      title: "교섭 회의 진행",
-      description: "임금·단체협약 교섭을 위한 제3차 회의를 진행했습니다.",
-      image: "assets/images/activity-01.jpg",
-    },
-    {
-      date: "2024.04.22",
-      title: "교육 환경 개선 캠페인",
-      description: "전국 동시 캠페인으로 교육 환경 개선을 촉구했습니다.",
-      image: "assets/images/activity-02.jpg",
-    },
-    {
-      date: "2024.03.30",
-      title: "조합원 교육 연수",
-      description: "교권 보호와 노동 권리에 대한 연수를 진행했습니다.",
-      image: "assets/images/activity-03.jpg",
-    },
-  ],
-  resources: [
-    {
-      title: "정책 자료",
-      description: "교육 정책 및 법령, 제도 관련 자료를 확인할 수 있습니다.",
-      link: "#",
-      icon: "document",
-    },
-    {
-      title: "연구 자료",
-      description: "과수정 교과 연구 및 교육 관련 연구 자료를 제공합니다.",
-      link: "#",
-      icon: "document",
-    },
-    {
-      title: "교육 자료",
-      description: "수업 자료, 교수법, 평가 자료 등을 공유합니다.",
-      link: "#",
-      icon: "document",
-    },
-    {
-      title: "조합 자료",
-      description: "조합 규약, 회의록, 보고서 등 조합 내부 자료를 제공합니다.",
-      link: "#",
-      icon: "document",
-    },
-  ],
-  aboutItems: [
-    {
-      title: "우리는 누구인가",
-      description: "과학·수학·정보 교사의 권리와 전문성을 지키는 노동조합입니다.",
-      icon: "people",
-    },
-    {
-      title: "우리의 목표",
-      description: "더 나은 교육 환경과 조합원의 권익 보호를 위해 힘쓰고 있습니다.",
-      icon: "handshake",
-    },
-    {
-      title: "우리의 원칙",
-      description: "연대, 참여, 권리를 바탕으로 민주적이고 투명하게 운영됩니다.",
-      icon: "shield",
-    },
-    {
-      title: "연혁",
-      description: "과수정 교원노동조합의 걸어온 길과 주요 활동을 소개합니다.",
-      icon: "flag",
-    },
-  ],
-  contactItems: [
-    {
-      title: "전화 문의",
-      main: "02-000-0000",
-      sub: "평일 09:00 - 18:00",
-      icon: "phone",
-    },
-    {
-      title: "이메일 문의",
-      main: "smi.union@example.com",
-      sub: "이메일 문의",
-      icon: "mail",
-    },
-    {
-      title: "방문 문의",
-      main: "서울특별시 00구 00로 00",
-      sub: "0000빌딩 000호 / 과수정 교원노동조합 사무실",
-      icon: "map",
-    },
-  ],
+  notices: [],
+  activities: [],
+  resources: [],
+  aboutItems: [],
+  contactItems: [],
+};
+
+const collectionConfig = {
+  notices: {
+    label: "공지사항",
+    listUrl: "notice.html",
+    empty: "등록된 공지사항이 없습니다.",
+  },
+  activities: {
+    label: "활동",
+    listUrl: "activity.html",
+    empty: "등록된 활동이 없습니다.",
+  },
+  resources: {
+    label: "자료실",
+    listUrl: "resources.html",
+    empty: "등록된 자료가 없습니다.",
+  },
 };
 
 let siteContent = cloneContent(fallbackContent);
@@ -210,19 +125,29 @@ function normalizeContent(content) {
     }
   });
 
-  if (!Array.isArray(nextContent.site.sns)) {
-    nextContent.site.sns = [];
-  }
+  nextContent.notices = nextContent.notices.map((item, index) => normalizePost(item, "notices", index));
+  nextContent.activities = nextContent.activities.map((item, index) => normalizePost(item, "activities", index));
+  nextContent.resources = nextContent.resources.map((item, index) => normalizePost(item, "resources", index));
 
-  if (!Array.isArray(nextContent.home.titleLines)) {
-    nextContent.home.titleLines = [];
-  }
-
-  if (!Array.isArray(nextContent.home.visualWords)) {
-    nextContent.home.visualWords = [];
-  }
+  if (!Array.isArray(nextContent.site.sns)) nextContent.site.sns = [];
+  if (!Array.isArray(nextContent.home.titleLines)) nextContent.home.titleLines = [];
+  if (!Array.isArray(nextContent.home.visualWords)) nextContent.home.visualWords = [];
 
   return nextContent;
+}
+
+function normalizePost(item, collection, index) {
+  return {
+    id: item.id || makePostId(item, index),
+    date: item.date || "",
+    title: item.title || "",
+    summary: item.summary || item.description || item.body || "",
+    body: item.body || item.description || item.summary || "",
+    image: item.image || "",
+    attachmentLabel: item.attachmentLabel || (collection === "resources" ? "자료 보기" : "첨부 자료 보기"),
+    attachmentUrl: item.attachmentUrl || item.link || "",
+    icon: item.icon || "document",
+  };
 }
 
 async function loadSiteContent() {
@@ -235,7 +160,7 @@ async function loadSiteContent() {
 
     siteContent = normalizeContent(await response.json());
   } catch (error) {
-    siteContent = cloneContent(fallbackContent);
+    siteContent = normalizeContent(fallbackContent);
   }
 }
 
@@ -264,6 +189,50 @@ function renderEmpty(message) {
   return `<p class="empty-state">${escapeHtml(message)}</p>`;
 }
 
+function makePostId(item, index = 0) {
+  const seed = [item.date, item.title, index + 1].filter(Boolean).join("-");
+  const slug = seed
+    .normalize("NFKD")
+    .replace(/[^\w가-힣]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase();
+
+  return slug || `post-${index + 1}`;
+}
+
+function getPostUrl(collection, item, index = 0) {
+  return `post.html?type=${encodeURIComponent(collection)}&id=${encodeURIComponent(item.id || makePostId(item, index))}`;
+}
+
+function renderPostBody(body) {
+  return String(body || "")
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+    .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, "<br />")}</p>`)
+    .join("");
+}
+
+function renderMedia(item, altText, className = "post-media") {
+  if (!item.image) return "";
+
+  return `
+    <figure class="${className}">
+      <img src="${escapeHtml(item.image)}" alt="${escapeHtml(altText)}" loading="lazy" />
+    </figure>
+  `;
+}
+
+function renderAttachment(item) {
+  if (!item.attachmentUrl || item.attachmentUrl === "#") return "";
+
+  return `
+    <a class="post-attachment" href="${escapeHtml(item.attachmentUrl)}" target="_blank" rel="noreferrer">
+      ${escapeHtml(item.attachmentLabel || "자료 보기")}
+    </a>
+  `;
+}
+
 function renderHero() {
   const hero = siteContent.home || {};
   const title = document.querySelector("#home-title");
@@ -275,13 +244,8 @@ function renderHero() {
     title.innerHTML = (hero.titleLines || []).map((line) => `<span>${escapeHtml(line)}</span>`).join("");
   }
 
-  if (subtitle) {
-    subtitle.textContent = hero.subtitle || "";
-  }
-
-  if (copy) {
-    copy.textContent = hero.copy || "";
-  }
+  if (subtitle) subtitle.textContent = hero.subtitle || "";
+  if (copy) copy.textContent = hero.copy || "";
 
   if (visual) {
     visual.innerHTML = (hero.visualWords || []).map((word) => `<span>${escapeHtml(word)}</span>`).join("");
@@ -295,9 +259,7 @@ function renderFooter() {
   const copyright = document.querySelector(".site-footer__copyright");
   const snsList = document.querySelector(".site-footer__sns ul");
 
-  if (officeName) {
-    officeName.textContent = site.officeName || site.name || "";
-  }
+  if (officeName) officeName.textContent = site.officeName || site.name || "";
 
   if (address) {
     const addressLines = Array.isArray(site.addressLines) ? site.addressLines : [];
@@ -305,18 +267,12 @@ function renderFooter() {
     address.innerHTML = [...addressLines.map(escapeHtml), escapeHtml(detailLine)].filter(Boolean).join("<br />");
   }
 
-  if (copyright) {
-    copyright.textContent = site.copyright || "";
-  }
+  if (copyright) copyright.textContent = site.copyright || "";
 
   if (snsList) {
     snsList.innerHTML = (site.sns || [])
       .filter((item) => item.label)
-      .map(
-        (item) => `
-          <li><a href="${escapeHtml(item.url || "#")}" aria-label="${escapeHtml(item.label)}">${escapeHtml(item.label)}</a></li>
-        `
-      )
+      .map((item) => `<li><a href="${escapeHtml(item.url || "#")}" aria-label="${escapeHtml(item.label)}">${escapeHtml(item.label)}</a></li>`)
       .join("");
   }
 }
@@ -329,9 +285,10 @@ function renderNotices() {
   if (noticeList) {
     noticeList.innerHTML = notices.length
       ? notices
+          .slice(0, 5)
           .map(
-            (notice) => `
-              <a class="notice-list__item" href="${escapeHtml(notice.link || "notice.html")}" role="listitem" aria-label="${escapeHtml(notice.title)}">
+            (notice, index) => `
+              <a class="notice-list__item" href="${escapeHtml(getPostUrl("notices", notice, index))}" role="listitem" aria-label="${escapeHtml(notice.title)}">
                 <time class="notice-list__date" datetime="${toDateTime(notice.date)}">${escapeHtml(notice.date)}</time>
                 <span class="notice-list__title">${escapeHtml(notice.title)}</span>
                 <span class="notice-list__arrow" aria-hidden="true">→</span>
@@ -339,23 +296,23 @@ function renderNotices() {
             `
           )
           .join("")
-      : renderEmpty("등록된 공지사항이 없습니다.");
+      : renderEmpty(collectionConfig.notices.empty);
   }
 
   if (noticePageList) {
     noticePageList.innerHTML = notices.length
       ? notices
           .map(
-            (notice) => `
-              <article class="notice-entry">
+            (notice, index) => `
+              <a class="notice-entry notice-entry--link" href="${escapeHtml(getPostUrl("notices", notice, index))}">
                 <time class="notice-entry__date" datetime="${toDateTime(notice.date)}">${escapeHtml(notice.date)}</time>
                 <h2 class="notice-entry__title">${escapeHtml(notice.title)}</h2>
-                <p class="notice-entry__body">${escapeHtml(notice.body || "")}</p>
-              </article>
+                <p class="notice-entry__body">${escapeHtml(notice.summary || notice.body)}</p>
+              </a>
             `
           )
           .join("")
-      : renderEmpty("등록된 공지사항이 없습니다.");
+      : renderEmpty(collectionConfig.notices.empty);
   }
 }
 
@@ -367,29 +324,24 @@ function renderActivities() {
   const markup = activities.length
     ? activities
         .map(
-          (activity) => `
-            <article class="activity-card">
+          (activity, index) => `
+            <a class="activity-card" href="${escapeHtml(getPostUrl("activities", activity, index))}">
               <div class="activity-card__image">
                 <img src="${escapeHtml(activity.image || "")}" alt="${escapeHtml(activity.title)} 활동 사진" loading="lazy" />
               </div>
               <div class="activity-card__body">
                 <time class="activity-card__date" datetime="${toDateTime(activity.date)}">${escapeHtml(activity.date)}</time>
                 <h3 class="activity-card__title">${escapeHtml(activity.title)}</h3>
-                <p class="activity-card__description">${escapeHtml(activity.description)}</p>
+                <p class="activity-card__description">${escapeHtml(activity.summary || activity.body)}</p>
               </div>
-            </article>
+            </a>
           `
         )
         .join("")
-    : renderEmpty("등록된 활동이 없습니다.");
+    : renderEmpty(collectionConfig.activities.empty);
 
-  if (activityList) {
-    activityList.innerHTML = markup;
-  }
-
-  if (activityPageList) {
-    activityPageList.innerHTML = markup;
-  }
+  if (activityList) activityList.innerHTML = markup;
+  if (activityPageList) activityPageList.innerHTML = markup;
 }
 
 function renderResources() {
@@ -397,38 +349,39 @@ function renderResources() {
   const resourceList = document.querySelector("#resources-list");
   const resourcePageList = document.querySelector("#resources-page-list");
 
-  if (resourceList) {
-    resourceList.innerHTML = resources.length
-      ? resources
-          .map(
-            (resource) => `
-              <article class="resource-card">
-                <span class="icon">${getIcon(resource.icon)}</span>
-                <h3 class="resource-card__title">${escapeHtml(resource.title)}</h3>
-                <p class="resource-card__description">${escapeHtml(resource.description)}</p>
-              </article>
-            `
-          )
-          .join("")
-      : renderEmpty("등록된 자료가 없습니다.");
-  }
+  const homeMarkup = resources.length
+    ? resources
+        .slice(0, 4)
+        .map(
+          (resource, index) => `
+            <a class="resource-card" href="${escapeHtml(getPostUrl("resources", resource, index))}">
+              <span class="icon">${getIcon(resource.icon)}</span>
+              <h3 class="resource-card__title">${escapeHtml(resource.title)}</h3>
+              <p class="resource-card__description">${escapeHtml(resource.summary || resource.body)}</p>
+            </a>
+          `
+        )
+        .join("")
+    : renderEmpty(collectionConfig.resources.empty);
 
-  if (resourcePageList) {
-    resourcePageList.innerHTML = resources.length
-      ? resources
-          .map(
-            (resource) => `
-              <article class="resource-card">
-                <span class="icon">${getIcon(resource.icon)}</span>
-                <h2 class="resource-card__title">${escapeHtml(resource.title)}</h2>
-                <p class="resource-card__description">${escapeHtml(resource.description)}</p>
-                <a class="resource-card__link" href="${escapeHtml(resource.link || "#")}">자료 보기</a>
-              </article>
-            `
-          )
-          .join("")
-      : renderEmpty("등록된 자료가 없습니다.");
-  }
+  const pageMarkup = resources.length
+    ? resources
+        .map(
+          (resource, index) => `
+            <a class="resource-card" href="${escapeHtml(getPostUrl("resources", resource, index))}">
+              <span class="icon">${getIcon(resource.icon)}</span>
+              <time class="resource-card__date" datetime="${toDateTime(resource.date)}">${escapeHtml(resource.date)}</time>
+              <h2 class="resource-card__title">${escapeHtml(resource.title)}</h2>
+              <p class="resource-card__description">${escapeHtml(resource.summary || resource.body)}</p>
+              <span class="resource-card__link">상세 보기</span>
+            </a>
+          `
+        )
+        .join("")
+    : renderEmpty(collectionConfig.resources.empty);
+
+  if (resourceList) resourceList.innerHTML = homeMarkup;
+  if (resourcePageList) resourcePageList.innerHTML = pageMarkup;
 }
 
 function renderAboutItems() {
@@ -478,6 +431,47 @@ function renderContactItems() {
     : renderEmpty("등록된 문의 항목이 없습니다.");
 }
 
+function renderPostDetail() {
+  const container = document.querySelector("#post-detail");
+
+  if (!container) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const type = params.get("type") || "notices";
+  const id = params.get("id") || "";
+  const config = collectionConfig[type];
+  const posts = config ? getArray(type) : [];
+  const post = posts.find((item, index) => String(item.id || makePostId(item, index)) === id);
+
+  if (!config || !post) {
+    container.innerHTML = `
+      <div class="post-status">
+        <h1>게시물을 찾을 수 없습니다</h1>
+        <p>주소가 바뀌었거나 삭제된 게시물입니다.</p>
+        <a class="post-back-link" href="index.html">홈으로 돌아가기</a>
+      </div>
+    `;
+    return;
+  }
+
+  document.title = `${post.title} | ${config.label} | ${siteContent.site.name}`;
+
+  container.innerHTML = `
+    <a class="post-back-link" href="${escapeHtml(config.listUrl)}">← ${escapeHtml(config.label)} 목록</a>
+    <header class="post-header">
+      <span class="post-category">${escapeHtml(config.label)}</span>
+      <h1 class="post-title" id="post-title">${escapeHtml(post.title)}</h1>
+      <time class="post-date" datetime="${toDateTime(post.date)}">${escapeHtml(post.date)}</time>
+      ${post.summary ? `<p class="post-summary">${escapeHtml(post.summary)}</p>` : ""}
+    </header>
+    ${renderMedia(post, `${post.title} 이미지`)}
+    <div class="post-content">
+      ${renderPostBody(post.body || post.summary)}
+    </div>
+    ${renderAttachment(post)}
+  `;
+}
+
 function renderAllSections() {
   renderHero();
   renderNotices();
@@ -485,11 +479,12 @@ function renderAllSections() {
   renderResources();
   renderAboutItems();
   renderContactItems();
+  renderPostDetail();
   renderFooter();
 }
 
 function applyImageFallbacks() {
-  document.querySelectorAll(".activity-card__image img").forEach((image) => {
+  document.querySelectorAll(".activity-card__image img, .post-media img").forEach((image) => {
     image.addEventListener("error", () => {
       image.classList.add("is-missing");
       image.alt = "";

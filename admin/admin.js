@@ -7,9 +7,35 @@ const DEFAULT_REPO = {
 };
 
 const blankItems = {
-  notices: () => ({ date: "", title: "", body: "", link: "notice.html" }),
-  activities: () => ({ date: "", title: "", description: "", image: "" }),
-  resources: () => ({ title: "", description: "", link: "#", icon: "document" }),
+  notices: () => ({
+    id: createPostId("notice"),
+    date: todayText(),
+    title: "",
+    summary: "",
+    body: "",
+    image: "",
+    attachmentLabel: "첨부 자료 보기",
+    attachmentUrl: "",
+  }),
+  activities: () => ({
+    id: createPostId("activity"),
+    date: todayText(),
+    title: "",
+    summary: "",
+    body: "",
+    image: "",
+  }),
+  resources: () => ({
+    id: createPostId("resource"),
+    date: todayText(),
+    title: "",
+    summary: "",
+    body: "",
+    image: "",
+    attachmentLabel: "자료 보기",
+    attachmentUrl: "",
+    icon: "document",
+  }),
   aboutItems: () => ({ title: "", description: "", icon: "document" }),
   contactItems: () => ({ title: "", main: "", sub: "", icon: "document" }),
   sns: () => ({ label: "", url: "#" }),
@@ -67,7 +93,7 @@ async function loadPublicContent() {
       throw new Error("public content not found");
     }
 
-    state.content = await response.json();
+    state.content = normalizeContent(await response.json());
     renderEditor();
     setStatus("현재 공개된 콘텐츠를 불러왔습니다. 저장하려면 GitHub에 연결하세요.");
   } catch (error) {
@@ -111,7 +137,7 @@ async function handleConnect(event) {
 async function loadContentFromGitHub() {
   const payload = await githubRequest(`/contents/${CONTENT_PATH}?ref=${encodeURIComponent(state.config.branch)}`);
   state.sha = payload.sha;
-  state.content = JSON.parse(base64ToString(payload.content));
+  state.content = normalizeContent(JSON.parse(base64ToString(payload.content)));
 }
 
 async function handleSave() {
@@ -120,12 +146,12 @@ async function handleSave() {
     return;
   }
 
-  setStatus("변경 사항을 저장하는 중입니다...");
+  setStatus("이미지와 자료를 업로드하고 변경 사항을 저장하는 중입니다...");
   saveButton.disabled = true;
 
   try {
     state.content = readContentFromForm();
-    await uploadActivityImages(state.content.activities);
+    await uploadManagedFiles(state.content);
 
     const body = JSON.stringify(stripPrivateFields(state.content), null, 2) + "\n";
     const payload = {
@@ -141,6 +167,7 @@ async function handleSave() {
     });
 
     state.sha = result.content.sha;
+    state.content = normalizeContent(stripPrivateFields(state.content));
     state.dirty = false;
     renderEditor();
     setStatus("저장되었습니다. GitHub Pages 배포가 끝나면 사이트에 반영됩니다.", "success");
@@ -164,24 +191,9 @@ function renderEditor() {
     <form class="editor-form" id="content-form">
       ${renderSiteSection(content)}
       ${renderHomeSection(content)}
-      ${renderCollectionSection("notices", "공지사항", "날짜, 제목, 본문을 수정합니다.", content.notices, [
-        { name: "date", label: "날짜", placeholder: "2024.05.20" },
-        { name: "title", label: "제목" },
-        { name: "body", label: "본문", type: "textarea" },
-        { name: "link", label: "연결 주소", placeholder: "notice.html" }
-      ])}
-      ${renderCollectionSection("activities", "활동", "활동 소식과 이미지를 수정합니다.", content.activities, [
-        { name: "date", label: "날짜", placeholder: "2024.05.18" },
-        { name: "title", label: "제목" },
-        { name: "description", label: "설명", type: "textarea" },
-        { name: "image", label: "이미지 경로", placeholder: "assets/images/activity-01.jpg", type: "image" }
-      ])}
-      ${renderCollectionSection("resources", "자료실", "자료 이름, 설명, 링크를 수정합니다.", content.resources, [
-        { name: "title", label: "제목" },
-        { name: "description", label: "설명", type: "textarea" },
-        { name: "link", label: "연결 주소", placeholder: "#" },
-        { name: "icon", label: "아이콘", type: "select" }
-      ])}
+      ${renderCollectionSection("notices", "공지사항", "방문자가 공지사항 목록에서 클릭해 상세 내용을 열람합니다.", content.notices, postFields("notice"))}
+      ${renderCollectionSection("activities", "활동", "활동 소식과 포스터 또는 사진을 게시합니다.", content.activities, postFields("activity"))}
+      ${renderCollectionSection("resources", "자료실", "자료 설명과 첨부 파일을 게시합니다.", content.resources, postFields("resource"))}
       ${renderCollectionSection("aboutItems", "조합소개", "소개 카드 내용을 수정합니다.", content.aboutItems, [
         { name: "title", label: "제목" },
         { name: "description", label: "설명", type: "textarea" },
@@ -195,6 +207,30 @@ function renderEditor() {
       ])}
     </form>
   `;
+}
+
+function postFields(kind) {
+  const fields = [
+    { name: "id", label: "게시물 ID", helper: "주소에 쓰이는 고유값입니다. 비워두면 자동 생성됩니다." },
+    { name: "date", label: "날짜", placeholder: "2024.05.20" },
+    { name: "title", label: "제목" },
+    { name: "summary", label: "목록 요약", type: "textarea" },
+    { name: "body", label: "상세 본문", type: "textarea" },
+    { name: "image", label: kind === "activity" ? "대표 이미지/활동 사진" : "대표 이미지/포스터", type: "image" },
+  ];
+
+  if (kind === "resource") {
+    fields.push({ name: "icon", label: "아이콘", type: "select" });
+  }
+
+  if (kind !== "activity") {
+    fields.push(
+      { name: "attachmentLabel", label: kind === "resource" ? "자료 버튼 문구" : "첨부 버튼 문구" },
+      { name: "attachmentUrl", label: kind === "resource" ? "자료 파일 또는 링크" : "첨부 파일 또는 링크", type: "file" }
+    );
+  }
+
+  return fields;
 }
 
 function renderSiteSection(content) {
@@ -284,7 +320,7 @@ function renderCollectionItem(key, item, index, fields) {
 function renderField(field, item, collectionKey = "", index = "") {
   const value = item[field.name] || "";
   const fieldId = `${collectionKey || "section"}-${field.name}-${index}`;
-  const wideClass = field.type === "textarea" || field.type === "image" ? "wide-field" : "";
+  const wideClass = ["textarea", "image", "file"].includes(field.type) ? "wide-field" : "";
   const helper = field.helper ? `<p class="helper-text">${escapeHtml(field.helper)}</p>` : "";
 
   if (field.type === "textarea") {
@@ -312,9 +348,20 @@ function renderField(field, item, collectionKey = "", index = "") {
     return `
       <label class="wide-field" for="${fieldId}">
         <span>${escapeHtml(field.label)}</span>
-        <input id="${fieldId}" data-field="${escapeHtml(field.name)}" value="${escapeHtml(value)}" placeholder="${escapeHtml(field.placeholder || "")}" />
-        <input type="file" accept="image/*" data-upload-field="${escapeHtml(field.name)}" />
-        <p class="helper-text">새 이미지를 선택하면 저장할 때 자동으로 업로드됩니다.</p>
+        <input id="${fieldId}" data-field="${escapeHtml(field.name)}" value="${escapeHtml(value)}" placeholder="assets/images/uploads/example.jpg" />
+        <input type="file" accept="image/*" data-upload-field="${escapeHtml(field.name)}" data-upload-kind="image" />
+        <p class="helper-text">새 이미지를 선택하면 저장할 때 자동으로 업로드되고 경로가 채워집니다.</p>
+      </label>
+    `;
+  }
+
+  if (field.type === "file") {
+    return `
+      <label class="wide-field" for="${fieldId}">
+        <span>${escapeHtml(field.label)}</span>
+        <input id="${fieldId}" data-field="${escapeHtml(field.name)}" value="${escapeHtml(value)}" placeholder="파일을 업로드하거나 외부 링크를 입력" />
+        <input type="file" accept=".pdf,.hwp,.hwpx,.doc,.docx,.ppt,.pptx,.xls,.xlsx,image/*" data-upload-field="${escapeHtml(field.name)}" data-upload-kind="file" />
+        <p class="helper-text">PDF, 이미지, 문서 파일을 업로드하거나 외부 링크를 직접 입력할 수 있습니다.</p>
       </label>
     `;
   }
@@ -340,21 +387,10 @@ function handleEditorClick(event) {
 
   if (!items) return;
 
-  if (action === "add") {
-    items.push(blankItems[collection]());
-  }
-
-  if (action === "delete") {
-    items.splice(index, 1);
-  }
-
-  if (action === "up" && index > 0) {
-    [items[index - 1], items[index]] = [items[index], items[index - 1]];
-  }
-
-  if (action === "down" && index < items.length - 1) {
-    [items[index], items[index + 1]] = [items[index + 1], items[index]];
-  }
+  if (action === "add") items.push(blankItems[collection]());
+  if (action === "delete") items.splice(index, 1);
+  if (action === "up" && index > 0) [items[index - 1], items[index]] = [items[index], items[index - 1]];
+  if (action === "down" && index < items.length - 1) [items[index], items[index + 1]] = [items[index + 1], items[index]];
 
   state.dirty = true;
   renderEditor();
@@ -390,9 +426,9 @@ function readContentFromForm() {
       copy: getSectionValue(form, "home", "copy"),
       visualWords: toLines(getSectionValue(form, "home", "visualWords")),
     },
-    notices: readCollection("notices", ["date", "title", "body", "link"]),
-    activities: readCollection("activities", ["date", "title", "description", "image"], true),
-    resources: readCollection("resources", ["title", "description", "link", "icon"]),
+    notices: readCollection("notices", postFields("notice")),
+    activities: readCollection("activities", postFields("activity")),
+    resources: readCollection("resources", postFields("resource")),
     aboutItems: readCollection("aboutItems", ["title", "description", "icon"]),
     contactItems: readCollection("contactItems", ["title", "main", "sub", "icon"]),
   });
@@ -402,20 +438,30 @@ function getSectionValue(form, section, field) {
   return form.querySelector(`[data-section="${section}"] [data-field="${field}"]`)?.value.trim() || "";
 }
 
-function readCollection(collection, fields, includeUpload = false) {
-  return [...document.querySelectorAll(`.admin-item[data-collection="${collection}"]`)].map((item) => {
+function readCollection(collection, fields) {
+  const normalizedFields = fields.map((field) => (typeof field === "string" ? { name: field } : field));
+
+  return [...document.querySelectorAll(`.admin-item[data-collection="${collection}"]`)].map((item, index) => {
     const nextItem = {};
 
-    fields.forEach((field) => {
-      nextItem[field] = item.querySelector(`[data-field="${field}"]`)?.value.trim() || "";
+    normalizedFields.forEach((field) => {
+      nextItem[field.name] = item.querySelector(`[data-field="${field.name}"]`)?.value.trim() || "";
     });
 
-    if (includeUpload) {
-      const file = item.querySelector('[data-upload-field="image"]')?.files[0];
-      if (file) {
-        nextItem._file = file;
-      }
+    if ("id" in nextItem && !nextItem.id) {
+      nextItem.id = createPostId(collection, index);
     }
+
+    item.querySelectorAll("[data-upload-field]").forEach((input) => {
+      const file = input.files[0];
+      if (!file) return;
+
+      nextItem._uploads = nextItem._uploads || {};
+      nextItem._uploads[input.dataset.uploadField] = {
+        file,
+        kind: input.dataset.uploadKind || "file",
+      };
+    });
 
     return nextItem;
   });
@@ -428,30 +474,44 @@ function toLines(value) {
     .filter(Boolean);
 }
 
-async function uploadActivityImages(activities) {
-  for (const activity of activities) {
-    if (!activity._file) continue;
+async function uploadManagedFiles(content) {
+  for (const collection of ["notices", "activities", "resources"]) {
+    for (const item of content[collection] || []) {
+      if (!item._uploads) continue;
 
-    const path = `assets/images/uploads/${makeSafeFileName(activity._file.name)}`;
-    const content = await fileToBase64(activity._file);
+      for (const [field, upload] of Object.entries(item._uploads)) {
+        const path = getUploadPath(upload.kind, upload.file.name);
+        const fileContent = await fileToBase64(upload.file);
 
-    await githubRequest(`/contents/${path}`, {
-      method: "PUT",
-      body: JSON.stringify({
-        message: `Upload ${path}`,
-        content,
-        branch: state.config.branch,
-      }),
-    });
+        await githubRequest(`/contents/${path}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            message: `Upload ${path}`,
+            content: fileContent,
+            branch: state.config.branch,
+          }),
+        });
 
-    activity.image = path;
-    delete activity._file;
+        item[field] = path;
+      }
+
+      delete item._uploads;
+    }
   }
+}
+
+function getUploadPath(kind, fileName) {
+  const directory = kind === "image" ? "assets/images/uploads" : "assets/files/uploads";
+  return `${directory}/${makeSafeFileName(fileName)}`;
 }
 
 function stripPrivateFields(content) {
   const cloned = JSON.parse(JSON.stringify(content));
-  cloned.activities = cloned.activities.map(({ _file, ...activity }) => activity);
+
+  ["notices", "activities", "resources"].forEach((collection) => {
+    cloned[collection] = (cloned[collection] || []).map(({ _uploads, ...item }) => item);
+  });
+
   return cloned;
 }
 
@@ -519,6 +579,10 @@ function normalizeContent(content) {
     if (!Array.isArray(next[key])) next[key] = [];
   });
 
+  next.notices = next.notices.map((item, index) => normalizePost(item, "notices", index));
+  next.activities = next.activities.map((item, index) => normalizePost(item, "activities", index));
+  next.resources = next.resources.map((item, index) => normalizePost(item, "resources", index));
+
   if (!Array.isArray(next.site.sns)) next.site.sns = [];
   if (!Array.isArray(next.site.addressLines)) next.site.addressLines = [];
   if (!Array.isArray(next.home.titleLines)) next.home.titleLines = [];
@@ -527,9 +591,36 @@ function normalizeContent(content) {
   return next;
 }
 
+function normalizePost(item, collection, index) {
+  return {
+    id: item.id || createPostId(collection, index),
+    date: item.date || "",
+    title: item.title || "",
+    summary: item.summary || item.description || item.body || "",
+    body: item.body || item.description || item.summary || "",
+    image: item.image || "",
+    attachmentLabel: item.attachmentLabel || (collection === "resources" ? "자료 보기" : "첨부 자료 보기"),
+    attachmentUrl: item.attachmentUrl || item.link || "",
+    icon: item.icon || "document",
+  };
+}
+
+function todayText() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}.${month}.${day}`;
+}
+
+function createPostId(prefix = "post", index = "") {
+  const suffix = index === "" ? Date.now() : `${Date.now()}-${index + 1}`;
+  return `${prefix}-${suffix}`;
+}
+
 function makeSafeFileName(name) {
   const now = Date.now();
-  const extension = name.includes(".") ? name.slice(name.lastIndexOf(".")).toLowerCase().replace(/[^a-z0-9.]/g, "") : ".jpg";
+  const extension = name.includes(".") ? name.slice(name.lastIndexOf(".")).toLowerCase().replace(/[^a-z0-9.]/g, "") : "";
   const baseName = name
     .replace(/\.[^.]+$/, "")
     .normalize("NFKD")
@@ -537,7 +628,7 @@ function makeSafeFileName(name) {
     .replace(/^-+|-+$/g, "")
     .toLowerCase();
 
-  return `${now}-${baseName || "image"}${extension}`;
+  return `${now}-${baseName || "file"}${extension || ".dat"}`;
 }
 
 async function fileToBase64(file) {
