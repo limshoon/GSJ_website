@@ -10,39 +10,15 @@ media_folder: assets/uploads
 public_folder: /assets/uploads
 
 collections:
-  - name: site_content
-    label: 사이트 콘텐츠
+  - name: home
+    label: 홈
     files:
-      - name: main_content
-        label: 전체 사이트 콘텐츠
-        file: content/site.json
+      - name: home_content
+        label: 홈 화면
+        file: content/home.json
         format: json
         fields:
-          - label: 기본 정보
-            name: site
-            widget: object
-            fields:
-              - { label: 사이트 이름, name: name, widget: string }
-              - { label: 사이트 설명, name: description, widget: text }
-              - { label: 사무실 이름, name: officeName, widget: string }
-              - label: 주소
-                name: addressLines
-                widget: list
-                summary: "{{fields.value}}"
-                field: { label: 주소 줄, name: value, widget: string }
-              - { label: 전화번호, name: phone, widget: string, required: false }
-              - { label: 이메일, name: email, widget: string, required: false }
-              - { label: 저작권 문구, name: copyright, widget: string, required: false }
-              - label: SNS 링크
-                name: sns
-                widget: list
-                required: false
-                summary: "{{fields.label}}"
-                fields:
-                  - { label: 이름, name: label, widget: string }
-                  - { label: 주소, name: url, widget: string, required: false }
-
-          - label: 홈 화면
+          - label: 홈 화면 내용
             name: home
             widget: object
             fields:
@@ -60,7 +36,15 @@ collections:
                 summary: "{{fields.value}}"
                 field: { label: 단어, name: value, widget: string }
 
-          - label: 공지사항
+  - name: notices
+    label: 공지사항
+    files:
+      - name: notices_content
+        label: 공지사항 게시물
+        file: content/notices.json
+        format: json
+        fields:
+          - label: 공지사항 목록
             name: notices
             widget: list
             add_to_top: true
@@ -77,7 +61,15 @@ collections:
               - { label: 첨부 파일 또는 링크, name: attachmentUrl, widget: file, required: false }
               - { label: 아이콘, name: icon, widget: hidden, default: document, required: false }
 
-          - label: 활동
+  - name: activities
+    label: 활동
+    files:
+      - name: activities_content
+        label: 활동 게시물
+        file: content/activities.json
+        format: json
+        fields:
+          - label: 활동 목록
             name: activities
             widget: list
             add_to_top: true
@@ -94,7 +86,15 @@ collections:
               - { label: 첨부 파일 또는 링크, name: attachmentUrl, widget: file, required: false }
               - { label: 아이콘, name: icon, widget: hidden, default: document, required: false }
 
-          - label: 자료실
+  - name: resources
+    label: 자료실
+    files:
+      - name: resources_content
+        label: 자료실 게시물
+        file: content/resources.json
+        format: json
+        fields:
+          - label: 자료 목록
             name: resources
             widget: list
             add_to_top: true
@@ -121,7 +121,70 @@ collections:
                   - { label: 보호, value: shield }
                   - { label: 깃발, value: flag }
 
-          - label: 조합소개
+  - name: contact
+    label: 문의
+    files:
+      - name: contact_content
+        label: 문의 정보
+        file: content/contact.json
+        format: json
+        fields:
+          - label: 문의 목록
+            name: contactItems
+            widget: list
+            collapsed: true
+            summary: "{{fields.title}}"
+            fields:
+              - { label: 제목, name: title, widget: string }
+              - { label: 주요 정보, name: main, widget: string }
+              - { label: 보조 정보, name: sub, widget: string, required: false }
+              - label: 아이콘
+                name: icon
+                widget: select
+                default: phone
+                options:
+                  - { label: 전화, value: phone }
+                  - { label: 이메일, value: mail }
+                  - { label: 지도, value: map }
+
+  - name: site_settings
+    label: 사이트 설정
+    files:
+      - name: site_info
+        label: 기본 정보
+        file: content/site-info.json
+        format: json
+        fields:
+          - label: 기본 정보
+            name: site
+            widget: object
+            fields:
+              - { label: 사이트 이름, name: name, widget: string }
+              - { label: 사이트 설명, name: description, widget: text }
+              - { label: 사무실 이름, name: officeName, widget: string }
+              - label: 주소
+                name: addressLines
+                widget: list
+                summary: "{{fields.value}}"
+                field: { label: 주소 줄, name: value, widget: string }
+              - { label: 전화번호, name: phone, widget: string, required: false }
+              - { label: 이메일, name: email, widget: string, required: false }
+              - { label: 저작권 문구, name: copyright, widget: string, required: false }
+              - label: SNS 링크
+                name: sns
+                widget: list
+                required: false
+                summary: "{{fields.label}}"
+                fields:
+                  - { label: 이름, name: label, widget: string }
+                  - { label: 주소, name: url, widget: string, required: false }
+
+      - name: about_content
+        label: 조합소개
+        file: content/about.json
+        format: json
+        fields:
+          - label: 소개 목록
             name: aboutItems
             widget: list
             required: false
@@ -140,21 +203,3 @@ collections:
                   - { label: 협력, value: handshake }
                   - { label: 보호, value: shield }
                   - { label: 깃발, value: flag }
-
-          - label: 문의
-            name: contactItems
-            widget: list
-            collapsed: true
-            summary: "{{fields.title}}"
-            fields:
-              - { label: 제목, name: title, widget: string }
-              - { label: 주요 정보, name: main, widget: string }
-              - { label: 보조 정보, name: sub, widget: string, required: false }
-              - label: 아이콘
-                name: icon
-                widget: select
-                default: phone
-                options:
-                  - { label: 전화, value: phone }
-                  - { label: 이메일, value: mail }
-                  - { label: 지도, value: map }

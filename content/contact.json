@@ -1,0 +1,22 @@
+{
+  "contactItems": [
+    {
+      "title": "전화 문의",
+      "main": "02-000-0000",
+      "sub": "평일 09:00 - 18:00",
+      "icon": "phone"
+    },
+    {
+      "title": "이메일 문의",
+      "main": "smi.union@example.com",
+      "sub": "이메일 문의",
+      "icon": "mail"
+    },
+    {
+      "title": "방문 문의",
+      "main": "서울특별시 00구 00로 00",
+      "sub": "0000빌딩 000호 / 과수정 교원노동조합 사무실",
+      "icon": "map"
+    }
+  ]
+}

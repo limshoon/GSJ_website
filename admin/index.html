@@ -7,9 +7,37 @@
     <title>콘텐츠 관리 | 과수정 교원노동조합</title>
     <link rel="icon" href="../assets/images/smitu-thumbnail.png" />
     <link rel="apple-touch-icon" href="../assets/images/smitu-thumbnail.png" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+    <link rel="stylesheet" href="decap-theme.css?v=20260716-admin-sidebar" />
     <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+    <script src="decap-ui.js?v=20260716-admin-sidebar" defer></script>
   </head>
   <body>
+    <aside class="admin-brand-sidebar" aria-label="관리자 게시판 메뉴">
+      <a class="admin-brand-sidebar__logo" href="../index.html" target="_blank" rel="noreferrer" aria-label="사이트 보기">
+        <img src="../assets/images/smitu-logo-full.png?v=20260716-logo" alt="SMITU 과수정 교원노동조합" />
+      </a>
+
+      <nav class="admin-brand-nav" aria-label="콘텐츠 관리 메뉴">
+        <a class="admin-brand-nav__link" href="#/collections/home/entries/home_content" data-admin-section="home">홈</a>
+        <a class="admin-brand-nav__link" href="#/collections/notices/entries/notices_content" data-admin-section="notices">공지사항</a>
+        <a class="admin-brand-nav__link" href="#/collections/activities/entries/activities_content" data-admin-section="activities">활동</a>
+        <a class="admin-brand-nav__link" href="#/collections/resources/entries/resources_content" data-admin-section="resources">자료실</a>
+        <a class="admin-brand-nav__link" href="#/collections/contact/entries/contact_content" data-admin-section="contact">문의</a>
+      </nav>
+
+      <div class="admin-brand-sidebar__footer">
+        <a href="#/collections/site_settings/entries/site_info" data-admin-section="site_settings">사이트 설정</a>
+        <a href="#/collections/site_settings/entries/about_content" data-admin-section="about">조합소개</a>
+        <a href="../index.html" target="_blank" rel="noreferrer">사이트 보기</a>
+      </div>
+    </aside>
+
+    <script>
+      if (!window.location.hash) {
+        window.location.hash = "#/collections/home/entries/home_content";
+      }
+    </script>
     <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
   </body>
 </html>

@@ -1,4 +1,14 @@
 const contentPath = "content/site.json";
+const contentSources = [
+  contentPath,
+  "content/site-info.json",
+  "content/home.json",
+  "content/notices.json",
+  "content/activities.json",
+  "content/resources.json",
+  "content/about.json",
+  "content/contact.json",
+];
 
 const fallbackContent = {
   "site": {
@@ -378,15 +388,27 @@ async function loadSiteContent() {
   }
 
   try {
-    const response = await fetch(`${contentPath}?v=${Date.now()}`, { cache: "no-store" });
+    const cacheStamp = Date.now();
+    const sourceData = await Promise.all(contentSources.map((path) => fetchContentSource(path, cacheStamp)));
+    const mergedContent = sourceData.reduce((content, source) => ({ ...content, ...source }), {});
 
-    if (!response.ok) {
-      throw new Error("Content file not found");
-    }
-
-    siteContent = normalizeContent(await response.json());
+    siteContent = normalizeContent(mergedContent);
   } catch (error) {
     siteContent = normalizeContent(fallbackContent);
+  }
+}
+
+async function fetchContentSource(path, cacheStamp) {
+  try {
+    const response = await fetch(`${path}?v=${cacheStamp}`, { cache: "no-store" });
+
+    if (!response.ok) {
+      return {};
+    }
+
+    return await response.json();
+  } catch (error) {
+    return {};
   }
 }
 
