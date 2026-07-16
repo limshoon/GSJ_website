@@ -1,46 +1,45 @@
 const POST_COLLECTIONS = ["notices", "activities", "resources"];
+const PAGE_SIZE = 20;
 const SAVE_RESET_DELAY = 1600;
 
-const blankItems = {
-  notices: () => ({
-    id: createPostId("notice"),
-    createdAt: nowIso(),
-    updatedAt: nowIso(),
-    date: todayText(),
-    title: "",
-    summary: "",
-    body: "",
-    image: "",
-    attachmentLabel: "첨부 자료 보기",
-    attachmentUrl: "",
-  }),
-  activities: () => ({
-    id: createPostId("activity"),
-    createdAt: nowIso(),
-    updatedAt: nowIso(),
-    date: todayText(),
-    title: "",
-    summary: "",
-    body: "",
-    image: "",
-  }),
-  resources: () => ({
-    id: createPostId("resource"),
-    createdAt: nowIso(),
-    updatedAt: nowIso(),
-    date: todayText(),
-    title: "",
-    summary: "",
-    body: "",
-    image: "",
-    attachmentLabel: "자료 보기",
-    attachmentUrl: "",
-    icon: "document",
-  }),
-  aboutItems: () => ({ title: "", description: "", icon: "document" }),
-  contactItems: () => ({ title: "", main: "", sub: "", icon: "phone" }),
-  sns: () => ({ label: "", url: "#" }),
+const collectionMeta = {
+  notices: {
+    label: "공지사항",
+    title: "공지사항 관리",
+    singular: "공지사항",
+    description: "조합의 주요 일정, 회의 안내, 교섭 소식 등을 관리합니다.",
+    dateLabel: "게시일",
+    newLabel: "새 공지사항 작성",
+    defaultCategory: "공지",
+    categoryOptions: ["공지", "일반", "행사", "교섭", "중요"],
+  },
+  activities: {
+    label: "활동",
+    title: "활동 관리",
+    singular: "활동",
+    description: "교섭, 캠페인, 교육 등 현장 활동 소식을 관리합니다.",
+    dateLabel: "활동일",
+    newLabel: "새 활동 작성",
+    defaultCategory: "활동",
+    categoryOptions: ["활동", "교섭", "캠페인", "교육", "행사"],
+  },
+  resources: {
+    label: "자료실",
+    title: "자료실 관리",
+    singular: "자료",
+    description: "정책, 연구, 수업, 조합 운영 자료를 관리합니다.",
+    dateLabel: "게시일",
+    newLabel: "새 자료 작성",
+    defaultCategory: "자료",
+    categoryOptions: ["자료", "정책", "연구", "교육", "조합"],
+  },
 };
+
+const statusOptions = [
+  ["published", "공개"],
+  ["private", "비공개"],
+  ["draft", "임시저장"],
+];
 
 const iconOptions = [
   ["document", "문서"],
@@ -54,14 +53,24 @@ const iconOptions = [
 ];
 
 const sectionLabels = {
-  home: "홈",
-  notices: "공지사항",
-  activities: "활동",
-  resources: "자료실",
-  contactItems: "문의",
+  dashboard: "대시보드",
+  notices: "공지사항 관리",
+  activities: "활동 관리",
+  resources: "자료실 관리",
+  contactItems: "문의 정보 관리",
   admins: "관리자 승인",
+  home: "홈 화면 설정",
   site: "사이트 설정",
   aboutItems: "조합소개",
+};
+
+const blankItems = {
+  notices: () => createBlankPost("notices"),
+  activities: () => createBlankPost("activities"),
+  resources: () => createBlankPost("resources"),
+  aboutItems: () => ({ title: "", description: "", icon: "document" }),
+  contactItems: () => ({ title: "", main: "", sub: "", icon: "phone" }),
+  sns: () => ({ label: "", url: "#" }),
 };
 
 const state = {
@@ -70,10 +79,23 @@ const state = {
   adminUsers: { users: [], requests: [] },
   connected: false,
   dirty: false,
-  activeSection: "home",
-  highlightedCollection: "",
+  activeSection: "dashboard",
+  editing: null,
+  listState: {},
   saveResetTimer: null,
 };
+
+POST_COLLECTIONS.forEach((collection) => {
+  state.listState[collection] = {
+    query: "",
+    category: "all",
+    status: "all",
+    sort: "latest",
+    page: 1,
+    pageSize: PAGE_SIZE,
+    selected: new Set(),
+  };
+});
 
 const editor = document.querySelector("#editor");
 const saveButton = document.querySelector("#save-button");
@@ -86,13 +108,14 @@ function init() {
   document.querySelectorAll("[data-admin-section]").forEach((button) => {
     button.addEventListener("click", () => setActiveSection(button.dataset.adminSection));
   });
-  saveButton.addEventListener("click", handleSave);
+  saveButton.addEventListener("click", handlePrimarySave);
   logoutButton.addEventListener("click", handleLogout);
   editor.addEventListener("click", handleEditorClick);
-  editor.addEventListener("input", markDirty);
-  editor.addEventListener("input", handleImagePreviewInput);
-  editor.addEventListener("change", markDirty);
-  editor.addEventListener("change", handleImagePreviewChange);
+  editor.addEventListener("submit", handleEditorSubmit);
+  editor.addEventListener("input", handleEditorInput);
+  editor.addEventListener("change", handleEditorChange);
+  window.addEventListener("popstate", () => applyRouteFromHash(true));
+  window.addEventListener("hashchange", () => applyRouteFromHash(true));
 
   bootstrap();
 }
@@ -111,8 +134,8 @@ async function bootstrap() {
 
     state.content = normalizeContent(contentPayload.content);
     state.adminUsers = usersPayload;
+    applyRouteFromHash(false);
     renderEditor();
-    setSaveButtonState("idle");
     setStatus("콘텐츠를 불러왔습니다.", "success");
   } catch (error) {
     window.location.href = `/login.html?next=${encodeURIComponent("/admin/")}`;
@@ -141,31 +164,339 @@ function renderEditor() {
     return;
   }
 
-  const content = normalizeContent(state.content);
-  state.content = content;
+  state.content = normalizeContent(state.content);
+  syncTopbar();
+
+  if (state.editing) {
+    editor.innerHTML = renderPostEditor();
+    return;
+  }
+
+  if (POST_COLLECTIONS.includes(state.activeSection)) {
+    editor.innerHTML = renderPostManager(state.activeSection);
+    return;
+  }
+
+  if (state.activeSection === "dashboard") {
+    editor.innerHTML = renderDashboard();
+    return;
+  }
+
+  if (state.activeSection === "admins") {
+    editor.innerHTML = renderAdminUsersSection();
+    return;
+  }
 
   editor.innerHTML = `
-    <form class="editor-form" id="content-form">
-      ${renderAdminUsersSection()}
-      ${renderSiteSection(content)}
-      ${renderHomeSection(content)}
-      ${renderCollectionSection("notices", "공지사항", "방문자가 공지사항 목록에서 클릭해 상세 내용을 열람합니다.", content.notices, postFields("notice"))}
-      ${renderCollectionSection("activities", "활동", "활동 소식과 포스터 또는 사진을 게시합니다.", content.activities, postFields("activity"))}
-      ${renderCollectionSection("resources", "자료실", "자료 설명과 첨부 파일을 게시합니다.", content.resources, postFields("resource"))}
-      ${renderCollectionSection("aboutItems", "조합소개", "소개 카드 내용을 수정합니다.", content.aboutItems, [
-        { name: "title", label: "제목" },
-        { name: "description", label: "설명", type: "textarea" },
-        { name: "icon", label: "아이콘", type: "select" }
-      ])}
-      ${renderCollectionSection("contactItems", "문의", "전화, 이메일, 방문 안내를 수정합니다.", content.contactItems, [
-        { name: "title", label: "제목" },
-        { name: "main", label: "주요 내용" },
-        { name: "sub", label: "보조 내용" },
-        { name: "icon", label: "아이콘", type: "select" }
-      ])}
+    <form class="editor-form admin-settings-form" id="settings-form">
+      ${renderSettingsSection(state.activeSection)}
     </form>
   `;
-  applyActiveSection();
+}
+
+function syncTopbar() {
+  const title = state.editing
+    ? state.editing.isNew
+      ? `${collectionMeta[state.editing.collection].singular} 작성`
+      : `${collectionMeta[state.editing.collection].singular} 수정`
+    : sectionLabels[state.activeSection] || "관리자";
+
+  adminTitle.textContent = title;
+  document.querySelectorAll("[data-admin-section]").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.adminSection === state.activeSection);
+  });
+
+  const canSave = Boolean(state.editing) || ["home", "site", "aboutItems", "contactItems"].includes(state.activeSection);
+  saveButton.disabled = !state.connected || !canSave;
+  saveButton.hidden = !canSave;
+  saveButton.textContent = state.editing ? (state.editing.isNew ? "게시물 저장" : "수정 저장") : "저장하고 게시";
+}
+
+function renderDashboard() {
+  const cards = POST_COLLECTIONS.map((collection) => {
+    const posts = getPosts(collection);
+    const published = posts.filter((post) => post.status === "published").length;
+
+    return `
+      <article class="admin-stat-card">
+        <span>${collectionMeta[collection].label}</span>
+        <strong>${posts.length}</strong>
+        <small>공개 ${published}개</small>
+        <button class="ghost-button" type="button" data-action="section" data-section-target="${collection}">관리하기</button>
+      </article>
+    `;
+  }).join("");
+  const recentPosts = POST_COLLECTIONS.flatMap((collection) => getPosts(collection).map((post) => ({ ...post, collection })))
+    .sort((a, b) => getPostTime(b) - getPostTime(a))
+    .slice(0, 8);
+
+  return `
+    <section class="admin-dashboard">
+      <div class="admin-stat-grid">${cards}</div>
+      <section class="admin-table-shell">
+        <div class="admin-table-header">
+          <div>
+            <h2>최근 게시물</h2>
+            <p>공지사항, 활동, 자료실의 최근 변경 항목입니다.</p>
+          </div>
+        </div>
+        <div class="admin-recent-list">
+          ${recentPosts.map((post) => renderRecentPost(post)).join("") || `<p class="empty-editor">등록된 게시물이 없습니다.</p>`}
+        </div>
+      </section>
+    </section>
+  `;
+}
+
+function renderRecentPost(post) {
+  return `
+    <button class="admin-recent-item" type="button" data-action="edit-post" data-collection="${post.collection}" data-id="${escapeHtml(post.id)}">
+      <span>${escapeHtml(collectionMeta[post.collection].label)}</span>
+      <strong>${escapeHtml(post.title || "제목 없음")}</strong>
+      <time>${escapeHtml(post.date || "-")}</time>
+    </button>
+  `;
+}
+
+function renderPostManager(collection) {
+  const meta = collectionMeta[collection];
+  const posts = getPosts(collection);
+  const view = getListView(collection);
+  const totalPages = Math.max(1, Math.ceil(view.filtered.length / view.pageSize));
+
+  if (view.state.page > totalPages) {
+    view.state.page = totalPages;
+    view.page = totalPages;
+    view.items = paginate(view.filtered, view.page, view.pageSize);
+  }
+
+  return `
+    <section class="admin-post-manager" data-manager="${collection}">
+      <header class="admin-page-heading">
+        <div>
+          <p class="eyebrow">Content</p>
+          <h2>${escapeHtml(meta.title)}</h2>
+          <p>${escapeHtml(meta.description)}</p>
+          <strong>총 ${posts.length}개의 게시물</strong>
+        </div>
+        <button class="primary-button" type="button" data-action="new-post" data-collection="${collection}">+ ${escapeHtml(meta.newLabel)}</button>
+      </header>
+
+      <form class="admin-list-toolbar" data-toolbar="${collection}">
+        <label class="admin-search-field">
+          <span class="sr-only">게시물 검색</span>
+          <input name="query" value="${escapeHtml(view.state.query)}" placeholder="제목, 내용으로 검색" />
+        </label>
+        <label>
+          <span class="sr-only">카테고리</span>
+          <select name="category">${renderOptions([["all", "카테고리 전체"], ...getCategoryOptions(collection).map((item) => [item, item])], view.state.category)}</select>
+        </label>
+        <label>
+          <span class="sr-only">상태</span>
+          <select name="status">${renderOptions([["all", "상태 전체"], ...statusOptions], view.state.status)}</select>
+        </label>
+        <label>
+          <span class="sr-only">정렬</span>
+          <select name="sort">${renderOptions([["latest", "최신순"], ["oldest", "오래된순"], ["title", "제목순"]], view.state.sort)}</select>
+        </label>
+        <label>
+          <span class="sr-only">페이지당 표시 수</span>
+          <select name="pageSize">${renderOptions([["20", "20개"], ["50", "50개"], ["100", "100개"]], String(view.state.pageSize))}</select>
+        </label>
+        <button class="secondary-button" type="submit">검색</button>
+        <button class="ghost-button" type="button" data-action="reset-list" data-collection="${collection}">초기화</button>
+      </form>
+
+      <div class="admin-list-result">
+        ${view.state.query ? `‘${escapeHtml(view.state.query)}’ 검색 결과 ${view.filtered.length}건` : `전체 ${view.filtered.length}건`}
+      </div>
+
+      ${renderBulkBar(collection, view)}
+
+      <div class="admin-table-shell">
+        <table class="admin-post-table">
+          <thead>
+            <tr>
+              <th scope="col"><input type="checkbox" data-action="select-page" data-collection="${collection}" ${view.items.length && view.items.every((post) => view.state.selected.has(post.id)) ? "checked" : ""} aria-label="현재 페이지 게시물 전체 선택" /></th>
+              <th scope="col">번호</th>
+              <th scope="col">제목</th>
+              <th scope="col">카테고리</th>
+              <th scope="col">상태</th>
+              <th scope="col">${escapeHtml(meta.dateLabel)}</th>
+              <th scope="col">수정일</th>
+              <th scope="col">조회수</th>
+              <th scope="col">관리</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${view.items.map((post, index) => renderPostRow(collection, post, view, index)).join("") || renderPostEmptyRow()}
+          </tbody>
+        </table>
+      </div>
+      ${renderPagination(view.page, totalPages, "admin", collection)}
+    </section>
+  `;
+}
+
+function renderBulkBar(collection, view) {
+  const count = view.state.selected.size;
+  if (!count) return "";
+
+  return `
+    <div class="admin-bulk-bar">
+      <strong>${count}개 선택됨</strong>
+      <button class="secondary-button" type="button" data-action="bulk-status" data-status="published" data-collection="${collection}">공개로 변경</button>
+      <button class="secondary-button" type="button" data-action="bulk-status" data-status="private" data-collection="${collection}">비공개로 변경</button>
+      <button class="danger-button" type="button" data-action="bulk-delete" data-collection="${collection}">삭제</button>
+    </div>
+  `;
+}
+
+function renderPostRow(collection, post, view, index) {
+  const absoluteNumber = view.filtered.length - ((view.page - 1) * view.pageSize + index);
+  const summary = post.summary || post.body || "";
+
+  return `
+    <tr>
+      <td data-label="선택"><input type="checkbox" data-action="select-post" data-collection="${collection}" data-id="${escapeHtml(post.id)}" ${view.state.selected.has(post.id) ? "checked" : ""} aria-label="${escapeHtml(post.title)} 선택" /></td>
+      <td data-label="번호">${absoluteNumber}</td>
+      <td data-label="제목">
+        <div class="admin-post-title" title="${escapeHtml(post.title)}">
+          <strong>${escapeHtml(post.title || "제목 없음")}</strong>
+          <span>${escapeHtml(summary || "요약 없음")}</span>
+        </div>
+      </td>
+      <td data-label="카테고리">${escapeHtml(post.category || collectionMeta[collection].defaultCategory)}</td>
+      <td data-label="상태"><span class="status-pill status-pill--${escapeHtml(post.status)}">${escapeHtml(getStatusLabel(post.status))}</span></td>
+      <td data-label="${escapeHtml(collectionMeta[collection].dateLabel)}">${escapeHtml(post.date || "-")}</td>
+      <td data-label="수정일">${escapeHtml(formatDate(post.updatedAt || post.updated_at))}</td>
+      <td data-label="조회수">${Number(post.views || 0).toLocaleString("ko-KR")}</td>
+      <td data-label="관리">
+        <div class="table-actions">
+          <a class="ghost-button" href="../${getPostUrl(collection, post)}" target="_blank" rel="noreferrer">보기</a>
+          <button class="secondary-button" type="button" data-action="edit-post" data-collection="${collection}" data-id="${escapeHtml(post.id)}">수정</button>
+          <button class="danger-button" type="button" data-action="delete-post" data-collection="${collection}" data-id="${escapeHtml(post.id)}">삭제</button>
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
+function renderPostEmptyRow() {
+  return `<tr><td colspan="9"><p class="empty-editor">검색 결과가 없습니다. 다른 검색어를 입력해 주세요.</p></td></tr>`;
+}
+
+function renderPostEditor() {
+  const { collection, isNew } = state.editing;
+  const meta = collectionMeta[collection];
+  const post = state.editing.draft;
+
+  return `
+    <section class="admin-edit-screen">
+      <div class="admin-edit-header">
+        <button class="ghost-button" type="button" data-action="back-to-list" data-collection="${collection}">← 목록으로</button>
+        <div>
+          <p class="eyebrow">${escapeHtml(meta.label)}</p>
+          <h2>${isNew ? `${meta.singular} 작성` : `${meta.singular} 수정`}</h2>
+        </div>
+      </div>
+      <form class="post-editor-form" id="post-editor-form" data-collection="${collection}">
+        <div class="editor-section">
+          <div class="field-grid">
+            ${renderField({ name: "title", label: "제목 *" }, post)}
+            ${renderField({ name: "date", label: `${meta.dateLabel} *`, placeholder: "2026.07.15" }, post)}
+            ${renderField({ name: "category", label: "카테고리", type: "select", options: meta.categoryOptions.map((item) => [item, item]) }, post)}
+            ${renderField({ name: "status", label: "상태", type: "select", options: statusOptions }, post)}
+            ${collection === "notices" ? renderField({ name: "pinned", label: "상단 고정", type: "checkbox" }, post) : ""}
+            ${collection === "notices" ? renderField({ name: "important", label: "중요 공지", type: "checkbox" }, post) : ""}
+            ${renderField({ name: "summary", label: "요약", type: "textarea" }, post)}
+            ${renderField({ name: "body", label: "본문", type: "textarea" }, post)}
+            ${renderField({ name: "image", label: collection === "activities" ? "대표 이미지/활동 사진" : "대표 이미지", type: "image" }, post)}
+            ${collection !== "activities" ? renderField({ name: "attachmentLabel", label: collection === "resources" ? "자료 버튼 문구" : "첨부 버튼 문구" }, post) : ""}
+            ${collection !== "activities" ? renderField({ name: "attachmentUrl", label: collection === "resources" ? "자료 파일 또는 링크" : "첨부 파일 또는 링크", type: "file" }, post) : ""}
+            ${collection === "resources" ? renderField({ name: "icon", label: "아이콘", type: "select", options: iconOptions }, post) : ""}
+          </div>
+        </div>
+        <div class="admin-edit-actions">
+          <button class="primary-button" type="submit">${isNew ? "게시물 저장" : "수정 저장"}</button>
+          <button class="secondary-button" type="button" data-action="save-draft">임시저장</button>
+          <button class="ghost-button" type="button" data-action="back-to-list" data-collection="${collection}">취소</button>
+        </div>
+      </form>
+    </section>
+  `;
+}
+
+function renderSettingsSection(section) {
+  const content = state.content;
+
+  if (section === "home") return renderHomeSection(content);
+  if (section === "site") return renderSiteSection(content);
+  if (section === "aboutItems") {
+    return renderCollectionSection("aboutItems", "조합소개", "소개 카드 내용을 수정합니다.", content.aboutItems, [
+      { name: "title", label: "제목" },
+      { name: "description", label: "설명", type: "textarea" },
+      { name: "icon", label: "아이콘", type: "select", options: iconOptions },
+    ]);
+  }
+  if (section === "contactItems") {
+    return renderCollectionSection("contactItems", "문의 정보", "전화, 이메일, 방문 안내를 수정합니다.", content.contactItems, [
+      { name: "title", label: "제목" },
+      { name: "main", label: "주요 내용" },
+      { name: "sub", label: "보조 내용" },
+      { name: "icon", label: "아이콘", type: "select", options: iconOptions },
+    ]);
+  }
+  return "";
+}
+
+function renderSiteSection(content) {
+  const site = content.site;
+
+  return `
+    <section class="editor-section" data-settings-section="site">
+      <div class="section-heading">
+        <div>
+          <h3 class="admin-section-title">기본 정보</h3>
+          <p>사이트 이름, 사무실 정보, SNS 링크를 관리합니다.</p>
+        </div>
+      </div>
+      <div class="field-grid" data-section="site">
+        ${renderField({ name: "name", label: "사이트 이름" }, site)}
+        ${renderField({ name: "officeName", label: "사무실 이름" }, site)}
+        ${renderField({ name: "description", label: "사이트 설명", type: "textarea" }, site)}
+        ${renderField({ name: "addressLines", label: "주소", type: "textarea", helper: "여러 줄 입력 가능" }, { addressLines: (site.addressLines || []).join("\n") })}
+        ${renderField({ name: "phone", label: "전화번호" }, site)}
+        ${renderField({ name: "email", label: "이메일" }, site)}
+        ${renderField({ name: "copyright", label: "저작권 문구" }, site)}
+      </div>
+      ${renderCollectionSection("sns", "SNS 링크", "노출할 SNS 이름과 주소를 수정합니다.", site.sns || [], [
+        { name: "label", label: "이름" },
+        { name: "url", label: "주소", placeholder: "#" },
+      ], true)}
+    </section>
+  `;
+}
+
+function renderHomeSection(content) {
+  const home = content.home;
+
+  return `
+    <section class="editor-section" data-settings-section="home">
+      <div class="section-heading">
+        <div>
+          <h3 class="admin-section-title">홈 화면</h3>
+          <p>첫 화면의 큰 문구와 설명을 관리합니다.</p>
+        </div>
+      </div>
+      <div class="field-grid" data-section="home">
+        ${renderField({ name: "titleLines", label: "큰 제목", type: "textarea", helper: "한 줄에 하나씩 입력" }, { titleLines: (home.titleLines || []).join("\n") })}
+        ${renderField({ name: "subtitle", label: "보조 문구" }, home)}
+        ${renderField({ name: "copy", label: "설명", type: "textarea" }, home)}
+        ${renderField({ name: "visualWords", label: "오른쪽 장식 단어", type: "textarea", helper: "한 줄에 하나씩 입력" }, { visualWords: (home.visualWords || []).join("\n") })}
+      </div>
+    </section>
+  `;
 }
 
 function renderAdminUsersSection() {
@@ -173,7 +504,7 @@ function renderAdminUsersSection() {
   const users = state.adminUsers.users || [];
 
   return `
-    <section class="editor-section" data-editor-section="admins">
+    <section class="editor-section">
       <div class="section-heading">
         <div>
           <h3 class="admin-section-title">관리자 가입 요청</h3>
@@ -181,11 +512,7 @@ function renderAdminUsersSection() {
         </div>
       </div>
       <div class="admin-request-list">
-        ${
-          requests.length
-            ? requests.map(renderAdminRequest).join("")
-            : `<p class="empty-editor">승인 대기 중인 요청이 없습니다.</p>`
-        }
+        ${requests.length ? requests.map(renderAdminRequest).join("") : `<p class="empty-editor">승인 대기 중인 요청이 없습니다.</p>`}
       </div>
       <div class="section-heading section-heading--sub">
         <div>
@@ -226,87 +553,15 @@ function renderApprovedAdmin(user) {
   `;
 }
 
-function postFields(kind) {
-  const fields = [
-    { name: "id", label: "게시물 ID", helper: "주소에 쓰이는 고유값입니다. 비워두면 자동 생성됩니다." },
-    { name: "date", label: "날짜", placeholder: "2024.05.20" },
-    { name: "title", label: "제목" },
-    { name: "summary", label: "목록 요약", type: "textarea" },
-    { name: "body", label: "상세 본문", type: "textarea" },
-    { name: "image", label: kind === "activity" ? "대표 이미지/활동 사진" : "대표 이미지/포스터", type: "image" },
-  ];
-
-  if (kind === "resource") fields.push({ name: "icon", label: "아이콘", type: "select" });
-  if (kind !== "activity") {
-    fields.push(
-      { name: "attachmentLabel", label: kind === "resource" ? "자료 버튼 문구" : "첨부 버튼 문구" },
-      { name: "attachmentUrl", label: kind === "resource" ? "자료 파일 또는 링크" : "첨부 파일 또는 링크", type: "file" }
-    );
-  }
-
-  return fields;
-}
-
-function renderSiteSection(content) {
-  const site = content.site;
-
-  return `
-    <section class="editor-section" data-editor-section="site">
-      <div class="section-heading">
-        <div>
-          <h3 class="admin-section-title">기본 정보</h3>
-          <p>사이트 이름, 사무실 정보, SNS 링크를 관리합니다.</p>
-        </div>
-      </div>
-      <div class="field-grid" data-section="site">
-        ${renderField({ name: "name", label: "사이트 이름" }, site)}
-        ${renderField({ name: "officeName", label: "사무실 이름" }, site)}
-        ${renderField({ name: "description", label: "사이트 설명", type: "textarea" }, site)}
-        ${renderField({ name: "addressLines", label: "주소", type: "textarea", helper: "여러 줄 입력 가능" }, { addressLines: (site.addressLines || []).join("\n") })}
-        ${renderField({ name: "phone", label: "전화번호" }, site)}
-        ${renderField({ name: "email", label: "이메일" }, site)}
-        ${renderField({ name: "copyright", label: "저작권 문구" }, site)}
-      </div>
-      ${renderCollectionSection("sns", "SNS 링크", "노출할 SNS 이름과 주소를 수정합니다.", site.sns || [], [
-        { name: "label", label: "이름" },
-        { name: "url", label: "주소", placeholder: "#" }
-      ], true)}
-    </section>
-  `;
-}
-
-function renderHomeSection(content) {
-  const home = content.home;
-
-  return `
-    <section class="editor-section" data-editor-section="home">
-      <div class="section-heading">
-        <div>
-          <h3 class="admin-section-title">홈 화면</h3>
-          <p>첫 화면의 큰 문구와 설명을 관리합니다.</p>
-        </div>
-      </div>
-      <div class="field-grid" data-section="home">
-        ${renderField({ name: "titleLines", label: "큰 제목", type: "textarea", helper: "한 줄에 하나씩 입력" }, { titleLines: (home.titleLines || []).join("\n") })}
-        ${renderField({ name: "subtitle", label: "보조 문구" }, home)}
-        ${renderField({ name: "copy", label: "설명", type: "textarea" }, home)}
-        ${renderField({ name: "visualWords", label: "오른쪽 장식 단어", type: "textarea", helper: "한 줄에 하나씩 입력" }, { visualWords: (home.visualWords || []).join("\n") })}
-      </div>
-    </section>
-  `;
-}
-
 function renderCollectionSection(key, title, description, items, fields, nested = false) {
-  const sectionAttribute = nested ? "" : ` data-editor-section="${key}"`;
-
   return `
-    <section class="${nested ? "nested-section" : "editor-section"}" data-wrapper="${key}"${sectionAttribute}>
+    <section class="${nested ? "nested-section" : "editor-section"}" data-wrapper="${key}">
       <div class="section-heading">
         <div>
           <h3 class="admin-section-title">${escapeHtml(title)}</h3>
           <p>${escapeHtml(description)}</p>
         </div>
-        <button class="secondary-button" type="button" data-action="add" data-collection="${key}">추가</button>
+        <button class="secondary-button" type="button" data-action="add-setting-item" data-collection="${key}">추가</button>
       </div>
       <div class="collection-list">
         ${(items || []).map((item, index) => renderCollectionItem(key, item, index, fields)).join("") || `<p class="empty-editor">아직 항목이 없습니다.</p>`}
@@ -316,16 +571,14 @@ function renderCollectionSection(key, title, description, items, fields, nested 
 }
 
 function renderCollectionItem(key, item, index, fields) {
-  const highlightClass = state.highlightedCollection === key && index === 0 ? " is-highlighted" : "";
-
   return `
-    <article class="admin-item${highlightClass}" data-collection="${key}" data-index="${index}">
+    <article class="admin-item" data-collection="${key}" data-index="${index}">
       <div class="item-header">
         <h4>${index + 1}. ${escapeHtml(item.title || item.label || "새 항목")}</h4>
         <div class="item-actions">
-          <button class="ghost-button" type="button" data-action="up" data-collection="${key}" data-index="${index}">위로</button>
-          <button class="ghost-button" type="button" data-action="down" data-collection="${key}" data-index="${index}">아래로</button>
-          <button class="danger-button" type="button" data-action="delete" data-collection="${key}" data-index="${index}">삭제</button>
+          <button class="ghost-button" type="button" data-action="move-setting" data-direction="up" data-collection="${key}" data-index="${index}">위로</button>
+          <button class="ghost-button" type="button" data-action="move-setting" data-direction="down" data-collection="${key}" data-index="${index}">아래로</button>
+          <button class="danger-button" type="button" data-action="delete-setting" data-collection="${key}" data-index="${index}">삭제</button>
         </div>
       </div>
       <div class="field-grid">
@@ -336,9 +589,9 @@ function renderCollectionItem(key, item, index, fields) {
 }
 
 function renderField(field, item, collectionKey = "", index = "") {
-  const value = item[field.name] || "";
+  const value = item[field.name] ?? "";
   const fieldId = `${collectionKey || "section"}-${field.name}-${index}`;
-  const wideClass = ["textarea", "image", "file"].includes(field.type) ? "wide-field" : "";
+  const wideClass = ["textarea", "image", "file", "checkbox"].includes(field.type) ? "wide-field" : "";
   const helper = field.helper ? `<p class="helper-text">${escapeHtml(field.helper)}</p>` : "";
 
   if (field.type === "textarea") {
@@ -352,12 +605,22 @@ function renderField(field, item, collectionKey = "", index = "") {
   }
 
   if (field.type === "select") {
+    const options = field.options || iconOptions;
     return `
       <label for="${fieldId}">
         <span>${escapeHtml(field.label)}</span>
         <select id="${fieldId}" data-field="${escapeHtml(field.name)}">
-          ${iconOptions.map(([optionValue, label]) => `<option value="${escapeHtml(optionValue)}"${optionValue === value ? " selected" : ""}>${escapeHtml(label)}</option>`).join("")}
+          ${renderOptions(options, String(value))}
         </select>
+      </label>
+    `;
+  }
+
+  if (field.type === "checkbox") {
+    return `
+      <label class="checkbox-field" for="${fieldId}">
+        <input id="${fieldId}" type="checkbox" data-field="${escapeHtml(field.name)}" ${value ? "checked" : ""} />
+        <span>${escapeHtml(field.label)}</span>
       </label>
     `;
   }
@@ -394,86 +657,280 @@ function renderField(field, item, collectionKey = "", index = "") {
   `;
 }
 
-function renderImagePreview(value) {
-  const src = String(value || "").trim();
-  const hasImage = Boolean(src);
+function handleEditorSubmit(event) {
+  event.preventDefault();
 
-  return `
-    <div class="image-preview${hasImage ? " has-image" : ""}" data-image-preview>
-      <img src="${escapeHtml(src)}" alt="선택한 이미지 미리보기"${hasImage ? "" : " hidden"} />
-      <span${hasImage ? " hidden" : ""}>이미지를 선택하면 미리보기가 표시됩니다.</span>
-    </div>
-  `;
-}
-
-async function handleSave() {
-  if (!state.connected) {
-    window.location.href = "/login.html";
+  const toolbar = event.target.closest("[data-toolbar]");
+  if (toolbar) {
+    applyListToolbar(toolbar);
     return;
   }
 
-  setSaveButtonState("saving");
-  setStatus("변경 사항을 저장하는 중입니다...");
-
-  try {
-    state.content = readContentFromForm();
-    await prepareManagedUploads(state.content);
-    const payload = await apiRequest("/.netlify/functions/admin-content", {
-      method: "PUT",
-      body: JSON.stringify({ content: state.content }),
-    });
-
-    state.content = normalizeContent(payload.content);
-    state.dirty = false;
-    renderEditor();
-    setSaveButtonState("success");
-    setStatus("저장되었습니다. 잠시 후 사이트에 자동 반영됩니다.", "success");
-    showToast("변경사항이 저장되었습니다.", "success");
-  } catch (error) {
-    setSaveButtonState("error");
-    setStatus(error.message, "error");
-    showToast("저장 중 오류가 발생했습니다.", "error");
+  const postForm = event.target.closest("#post-editor-form");
+  if (postForm) {
+    saveCurrentPost();
   }
 }
 
-async function handleLogout() {
-  await fetch("/.netlify/functions/admin-logout", { method: "POST", credentials: "same-origin" });
-  window.location.href = "/login.html";
+function handleEditorInput(event) {
+  if (event.target.closest("[data-image-source='true']")) updateImagePreview(event.target);
+  if (event.target.closest("#settings-form") || event.target.closest("#post-editor-form")) state.dirty = true;
+}
+
+function handleEditorChange(event) {
+  const selectionInput = event.target.closest("[data-action='select-post'], [data-action='select-page']");
+  if (selectionInput) {
+    if (selectionInput.dataset.action === "select-post") togglePostSelection(selectionInput);
+    if (selectionInput.dataset.action === "select-page") togglePageSelection(selectionInput);
+    return;
+  }
+
+  const uploadInput = event.target.closest("[data-upload-kind='image']");
+  if (uploadInput) updateImagePreview(uploadInput);
+  if (event.target.closest("#settings-form") || event.target.closest("#post-editor-form")) state.dirty = true;
 }
 
 async function handleEditorClick(event) {
-  const adminButton = event.target.closest("[data-admin-action]");
-  if (adminButton) {
-    await handleAdminRequestAction(adminButton);
+  const button = event.target.closest("button, a, [data-action], [data-admin-action]");
+  if (!button) return;
+
+  const action = button.dataset.action;
+  const adminAction = button.dataset.adminAction;
+
+  if (adminAction) {
+    await handleAdminRequestAction(button);
     return;
   }
 
-  const button = event.target.closest("[data-action]");
-  if (!button || !state.content) return;
+  if (!action) return;
 
-  if (document.querySelector("#content-form")) {
-    state.content = readContentFromForm({ sortPosts: false });
+  if (action === "section") setActiveSection(button.dataset.sectionTarget);
+  if (action === "new-post") openPostEditor(button.dataset.collection);
+  if (action === "edit-post") openPostEditor(button.dataset.collection, button.dataset.id);
+  if (action === "back-to-list") closePostEditor();
+  if (action === "delete-post") await deletePost(button.dataset.collection, button.dataset.id);
+  if (action === "reset-list") resetList(button.dataset.collection);
+  if (action === "bulk-status") await applyBulkStatus(button.dataset.collection, button.dataset.status);
+  if (action === "bulk-delete") await bulkDelete(button.dataset.collection);
+  if (action === "page") setListPage(button.dataset.collection, Number(button.dataset.page));
+  if (action === "save-draft") saveCurrentPost("draft");
+  if (action === "add-setting-item") addSettingItem(button.dataset.collection);
+  if (action === "delete-setting") deleteSettingItem(button.dataset.collection, Number(button.dataset.index));
+  if (action === "move-setting") moveSettingItem(button.dataset.collection, Number(button.dataset.index), button.dataset.direction);
+}
+
+async function handlePrimarySave() {
+  if (state.editing) {
+    await saveCurrentPost();
+    return;
+  }
+  await saveCurrentSettings();
+}
+
+async function saveCurrentSettings() {
+  try {
+    readSettingsFromForm();
+    await saveContent("저장되었습니다. 사이트에 자동 반영됩니다.");
+  } catch (error) {
+    setSaveButtonState("error");
+    setStatus(error.message, "error");
+  }
+}
+
+async function saveCurrentPost(forcedStatus = "") {
+  const form = document.querySelector("#post-editor-form");
+  if (!form || !state.editing) return;
+
+  const collection = state.editing.collection;
+  const post = readPostForm(form, collection);
+  if (forcedStatus) post.status = forcedStatus;
+
+  if (!post.title.trim()) {
+    setStatus("제목을 입력해 주세요.", "error");
+    form.querySelector("[data-field='title']")?.focus();
+    return;
   }
 
-  const collection = button.dataset.collection;
-  const action = button.dataset.action;
-  const index = Number(button.dataset.index);
-  const items = getMutableCollection(collection);
+  const previousContent = JSON.parse(JSON.stringify(state.content));
+  const posts = getPosts(collection);
+  const index = posts.findIndex((item) => item.id === state.editing.id);
 
-  if (!items) return;
+  if (index >= 0) posts[index] = post;
+  else posts.unshift(post);
 
-  if (action === "add") {
-    items.unshift(blankItems[collection]());
-    state.highlightedCollection = collection;
+  state.content[collection] = sortPostsByLatest(posts);
+  state.listState[collection].selected.clear();
+
+  try {
+    await prepareManagedUploads(state.content);
+    await saveContent(state.editing.isNew ? "게시물이 저장되었습니다." : "게시물이 수정되었습니다.");
+    state.editing = null;
+    state.activeSection = collection;
+    updateAdminRoute(collection);
+    renderEditor();
+  } catch (error) {
+    state.content = previousContent;
+    setSaveButtonState("error");
+    setStatus(error.message, "error");
+    renderEditor();
   }
-  if (action === "delete") items.splice(index, 1);
-  if (action === "up" && index > 0) [items[index - 1], items[index]] = [items[index], items[index - 1]];
-  if (action === "down" && index < items.length - 1) [items[index], items[index + 1]] = [items[index + 1], items[index]];
+}
 
+async function saveContent(message) {
+  setSaveButtonState("saving");
+  setStatus("변경 사항을 저장하는 중입니다...");
+
+  const payload = await apiRequest("/.netlify/functions/admin-content", {
+    method: "PUT",
+    body: JSON.stringify({ content: state.content }),
+  });
+
+  state.content = normalizeContent(payload.content);
+  state.dirty = false;
+  setSaveButtonState("success");
+  setStatus(message, "success");
+  showToast(message, "success");
+}
+
+function openPostEditor(collection, id = "") {
+  const existing = id ? getPosts(collection).find((post) => post.id === id) : null;
+  state.activeSection = collection;
+  state.editing = {
+    collection,
+    id: existing?.id || "",
+    isNew: !existing,
+    draft: existing ? { ...existing } : blankItems[collection](),
+  };
+  updateAdminRoute(`${collection}-${id ? `edit-${encodeURIComponent(id)}` : "new"}`);
+  renderEditor();
+}
+
+function closePostEditor() {
+  const collection = state.editing?.collection || state.activeSection;
+  state.editing = null;
+  state.activeSection = collection;
+  updateAdminRoute(collection);
+  renderEditor();
+}
+
+async function deletePost(collection, id) {
+  const post = getPosts(collection).find((item) => item.id === id);
+  if (!post) return;
+  const ok = await confirmDialog(`"${post.title}" 게시물을 삭제하시겠습니까?\n삭제 후 복구할 수 없습니다.`);
+  if (!ok) return;
+
+  const previousContent = JSON.parse(JSON.stringify(state.content));
+  state.content[collection] = getPosts(collection).filter((item) => item.id !== id);
+  state.listState[collection].selected.delete(id);
+
+  try {
+    await saveContent("게시물이 삭제되었습니다.");
+    renderEditor();
+  } catch (error) {
+    state.content = previousContent;
+    setStatus(error.message, "error");
+    renderEditor();
+  }
+}
+
+function togglePostSelection(input) {
+  const listState = state.listState[input.dataset.collection];
+  if (input.checked) listState.selected.add(input.dataset.id);
+  else listState.selected.delete(input.dataset.id);
+  renderEditor();
+}
+
+function togglePageSelection(input) {
+  const collection = input.dataset.collection;
+  const listState = state.listState[collection];
+  const view = getListView(collection);
+  view.items.forEach((post) => {
+    if (input.checked) listState.selected.add(post.id);
+    else listState.selected.delete(post.id);
+  });
+  renderEditor();
+}
+
+async function applyBulkStatus(collection, status) {
+  const listState = state.listState[collection];
+  if (!listState.selected.size) return;
+
+  getPosts(collection).forEach((post) => {
+    if (listState.selected.has(post.id)) {
+      post.status = status;
+      post.updatedAt = nowIso();
+    }
+  });
+  listState.selected.clear();
+  await saveContent("선택한 게시물 상태를 변경했습니다.");
+  renderEditor();
+}
+
+async function bulkDelete(collection) {
+  const listState = state.listState[collection];
+  const count = listState.selected.size;
+  if (!count) return;
+
+  const ok = await confirmDialog(`${count}개의 게시물을 삭제하시겠습니까?\n삭제 후 복구할 수 없습니다.`);
+  if (!ok) return;
+
+  state.content[collection] = getPosts(collection).filter((post) => !listState.selected.has(post.id));
+  listState.selected.clear();
+  await saveContent("선택한 게시물을 삭제했습니다.");
+  renderEditor();
+}
+
+function applyListToolbar(form) {
+  const collection = form.dataset.toolbar;
+  const listState = state.listState[collection];
+  const data = new FormData(form);
+
+  listState.query = String(data.get("query") || "").trim();
+  listState.category = String(data.get("category") || "all");
+  listState.status = String(data.get("status") || "all");
+  listState.sort = String(data.get("sort") || "latest");
+  listState.pageSize = Number(data.get("pageSize") || PAGE_SIZE);
+  listState.page = 1;
+  renderEditor();
+}
+
+function resetList(collection) {
+  state.listState[collection] = {
+    query: "",
+    category: "all",
+    status: "all",
+    sort: "latest",
+    page: 1,
+    pageSize: PAGE_SIZE,
+    selected: new Set(),
+  };
+  renderEditor();
+}
+
+function setListPage(collection, page) {
+  state.listState[collection].page = page;
+  renderEditor();
+}
+
+function addSettingItem(collection) {
+  getMutableCollection(collection).unshift(blankItems[collection]());
   state.dirty = true;
   renderEditor();
+}
 
-  if (action === "add") focusNewItem(collection);
+function deleteSettingItem(collection, index) {
+  getMutableCollection(collection).splice(index, 1);
+  state.dirty = true;
+  renderEditor();
+}
+
+function moveSettingItem(collection, index, direction) {
+  const items = getMutableCollection(collection);
+  const target = direction === "up" ? index - 1 : index + 1;
+  if (target < 0 || target >= items.length) return;
+  [items[index], items[target]] = [items[target], items[index]];
+  state.dirty = true;
+  renderEditor();
 }
 
 async function handleAdminRequestAction(button) {
@@ -493,6 +950,95 @@ async function handleAdminRequestAction(button) {
   }
 }
 
+async function handleLogout() {
+  await fetch("/.netlify/functions/admin-logout", { method: "POST", credentials: "same-origin" });
+  window.location.href = "/login.html";
+}
+
+function readPostForm(form, collection) {
+  const original = state.editing.draft || {};
+  const post = {
+    ...original,
+    id: original.id || createPostId(collection),
+    date: getFieldValue(form, "date"),
+    title: getFieldValue(form, "title"),
+    summary: getFieldValue(form, "summary"),
+    body: getFieldValue(form, "body"),
+    image: getFieldValue(form, "image"),
+    category: getFieldValue(form, "category") || collectionMeta[collection].defaultCategory,
+    status: getFieldValue(form, "status") || "published",
+    views: Number(original.views || 0),
+    attachmentLabel: getFieldValue(form, "attachmentLabel") || original.attachmentLabel || (collection === "resources" ? "자료 보기" : "첨부 자료 보기"),
+    attachmentUrl: getFieldValue(form, "attachmentUrl") || "",
+    icon: getFieldValue(form, "icon") || original.icon || "document",
+    pinned: getCheckboxValue(form, "pinned"),
+    important: getCheckboxValue(form, "important"),
+    createdAt: original.createdAt || nowIso(),
+    updatedAt: nowIso(),
+  };
+
+  form.querySelectorAll("[data-upload-field]").forEach((input) => {
+    const file = input.files[0];
+    if (!file) return;
+    post._uploads = post._uploads || {};
+    post._uploads[input.dataset.uploadField] = { file, kind: input.dataset.uploadKind || "file" };
+  });
+
+  return normalizePost(post, collection, 0);
+}
+
+function readSettingsFromForm() {
+  const form = document.querySelector("#settings-form");
+  if (!form) return;
+
+  if (state.activeSection === "site") {
+    state.content.site = {
+      name: getSectionValue(form, "site", "name"),
+      description: getSectionValue(form, "site", "description"),
+      officeName: getSectionValue(form, "site", "officeName"),
+      addressLines: toLines(getSectionValue(form, "site", "addressLines")),
+      phone: getSectionValue(form, "site", "phone"),
+      email: getSectionValue(form, "site", "email"),
+      copyright: getSectionValue(form, "site", "copyright"),
+      sns: readCollection("sns", ["label", "url"]),
+    };
+  }
+  if (state.activeSection === "home") {
+    state.content.home = {
+      titleLines: toLines(getSectionValue(form, "home", "titleLines")),
+      subtitle: getSectionValue(form, "home", "subtitle"),
+      copy: getSectionValue(form, "home", "copy"),
+      visualWords: toLines(getSectionValue(form, "home", "visualWords")),
+    };
+  }
+  if (state.activeSection === "aboutItems") state.content.aboutItems = readCollection("aboutItems", ["title", "description", "icon"]);
+  if (state.activeSection === "contactItems") state.content.contactItems = readCollection("contactItems", ["title", "main", "sub", "icon"]);
+}
+
+function getSectionValue(form, section, field) {
+  return form.querySelector(`[data-section="${section}"] [data-field="${field}"]`)?.value.trim() || "";
+}
+
+function readCollection(collection, fields) {
+  const normalizedFields = fields.map((field) => (typeof field === "string" ? { name: field } : field));
+
+  return [...document.querySelectorAll(`.admin-item[data-collection="${collection}"]`)].map((item) => {
+    const nextItem = {};
+    normalizedFields.forEach((field) => {
+      nextItem[field.name] = item.querySelector(`[data-field="${field.name}"]`)?.value.trim() || "";
+    });
+    return nextItem;
+  });
+}
+
+function getFieldValue(form, field) {
+  return form.querySelector(`[data-field="${field}"]`)?.value.trim() || "";
+}
+
+function getCheckboxValue(form, field) {
+  return Boolean(form.querySelector(`[data-field="${field}"]`)?.checked);
+}
+
 function getMutableCollection(collection) {
   if (collection === "sns") {
     state.content.site.sns = state.content.site.sns || [];
@@ -503,81 +1049,12 @@ function getMutableCollection(collection) {
   return state.content[collection];
 }
 
-function readContentFromForm(options = {}) {
-  const form = document.querySelector("#content-form");
-  const { sortPosts = true } = options;
-
-  return normalizeContent(
-    {
-      site: {
-        name: getSectionValue(form, "site", "name"),
-        description: getSectionValue(form, "site", "description"),
-        officeName: getSectionValue(form, "site", "officeName"),
-        addressLines: toLines(getSectionValue(form, "site", "addressLines")),
-        phone: getSectionValue(form, "site", "phone"),
-        email: getSectionValue(form, "site", "email"),
-        copyright: getSectionValue(form, "site", "copyright"),
-        sns: readCollection("sns", ["label", "url"]),
-      },
-      home: {
-        titleLines: toLines(getSectionValue(form, "home", "titleLines")),
-        subtitle: getSectionValue(form, "home", "subtitle"),
-        copy: getSectionValue(form, "home", "copy"),
-        visualWords: toLines(getSectionValue(form, "home", "visualWords")),
-      },
-      notices: readCollection("notices", postFields("notice")),
-      activities: readCollection("activities", postFields("activity")),
-      resources: readCollection("resources", postFields("resource")),
-      aboutItems: readCollection("aboutItems", ["title", "description", "icon"]),
-      contactItems: readCollection("contactItems", ["title", "main", "sub", "icon"]),
-    },
-    { sortPosts }
-  );
-}
-
-function getSectionValue(form, section, field) {
-  return form.querySelector(`[data-section="${section}"] [data-field="${field}"]`)?.value.trim() || "";
-}
-
-function readCollection(collection, fields) {
-  const normalizedFields = fields.map((field) => (typeof field === "string" ? { name: field } : field));
-
-  return [...document.querySelectorAll(`.admin-item[data-collection="${collection}"]`)].map((item, index) => {
-    const nextItem = {};
-    const originalItem = collection === "sns" ? state.content?.site?.sns?.[index] || {} : state.content?.[collection]?.[index] || {};
-
-    normalizedFields.forEach((field) => {
-      nextItem[field.name] = item.querySelector(`[data-field="${field.name}"]`)?.value.trim() || "";
-    });
-
-    if ("id" in nextItem && !nextItem.id) nextItem.id = createPostId(collection, index);
-
-    item.querySelectorAll("[data-upload-field]").forEach((input) => {
-      const file = input.files[0];
-      if (!file) return;
-
-      nextItem._uploads = nextItem._uploads || {};
-      nextItem._uploads[input.dataset.uploadField] = {
-        file,
-        kind: input.dataset.uploadKind || "file",
-      };
-    });
-
-    if (POST_COLLECTIONS.includes(collection)) {
-      nextItem.createdAt = originalItem.createdAt || originalItem.created_at || nowIso();
-      nextItem.updatedAt = hasPostChanged(originalItem, nextItem) ? nowIso() : originalItem.updatedAt || originalItem.updated_at || nextItem.createdAt;
-    }
-
-    return nextItem;
-  });
-}
-
 async function prepareManagedUploads(content) {
-  for (const collection of ["notices", "activities", "resources"]) {
+  for (const collection of POST_COLLECTIONS) {
     for (const item of content[collection] || []) {
       if (!item._uploads) continue;
-
       for (const upload of Object.values(item._uploads)) {
+        if (!upload.file) continue;
         upload.name = upload.file.name;
         upload.content = await fileToBase64(upload.file);
         delete upload.file;
@@ -588,18 +1065,154 @@ async function prepareManagedUploads(content) {
 
 function setActiveSection(section) {
   if (!sectionLabels[section]) return;
+  state.editing = null;
   state.activeSection = section;
-  applyActiveSection();
+  updateAdminRoute(section);
+  renderEditor();
 }
 
-function applyActiveSection() {
-  adminTitle.textContent = sectionLabels[state.activeSection] || "관리자";
-  document.querySelectorAll("[data-admin-section]").forEach((button) => {
-    button.classList.toggle("is-active", button.dataset.adminSection === state.activeSection);
+function applyRouteFromHash(shouldRender = true) {
+  const route = decodeURIComponent(window.location.hash.replace(/^#/, ""));
+
+  if (!route) {
+    state.editing = null;
+    state.activeSection = "dashboard";
+    if (shouldRender) renderEditor();
+    return;
+  }
+
+  const newPostMatch = route.match(/^(notices|activities|resources)-new$/);
+  if (newPostMatch) {
+    const collection = newPostMatch[1];
+    state.activeSection = collection;
+    state.editing = {
+      collection,
+      id: "",
+      isNew: true,
+      draft: blankItems[collection](),
+    };
+    if (shouldRender) renderEditor();
+    return;
+  }
+
+  const editPostMatch = route.match(/^(notices|activities|resources)-edit-(.+)$/);
+  if (editPostMatch) {
+    const [, collection, id] = editPostMatch;
+    const existing = getPosts(collection).find((post) => post.id === id);
+    state.activeSection = collection;
+    state.editing = existing
+      ? { collection, id: existing.id, isNew: false, draft: { ...existing } }
+      : null;
+    if (shouldRender) renderEditor();
+    return;
+  }
+
+  if (sectionLabels[route]) {
+    state.editing = null;
+    state.activeSection = route;
+    if (shouldRender) renderEditor();
+  }
+}
+
+function updateAdminRoute(route) {
+  const target = `#${route}`;
+  if (window.location.hash !== target) {
+    window.history.pushState(null, "", target);
+  }
+}
+
+function getListView(collection) {
+  const listState = state.listState[collection];
+  const posts = getPosts(collection);
+  const query = normalizeSearchText(listState.query);
+  let filtered = posts.filter((post) => {
+    const haystack = normalizeSearchText([post.title, post.summary, post.body, post.author, post.category].join(" "));
+    const matchesQuery = !query || haystack.includes(query);
+    const matchesCategory = listState.category === "all" || post.category === listState.category;
+    const matchesStatus = listState.status === "all" || post.status === listState.status;
+    return matchesQuery && matchesCategory && matchesStatus;
   });
-  document.querySelectorAll("[data-editor-section]").forEach((section) => {
-    section.hidden = section.dataset.editorSection !== state.activeSection;
+
+  filtered = sortAdminPosts(filtered, listState.sort);
+  const pageSize = Number(listState.pageSize || PAGE_SIZE);
+  const page = Math.max(1, Number(listState.page || 1));
+
+  return {
+    state: listState,
+    filtered,
+    page,
+    pageSize,
+    items: paginate(filtered, page, pageSize),
+  };
+}
+
+function getPosts(collection) {
+  return Array.isArray(state.content?.[collection]) ? state.content[collection] : [];
+}
+
+function getCategoryOptions(collection) {
+  const base = collectionMeta[collection].categoryOptions;
+  const saved = getPosts(collection).map((post) => post.category).filter(Boolean);
+  return [...new Set([...base, ...saved])];
+}
+
+function sortAdminPosts(posts, sort) {
+  if (sort === "oldest") return [...posts].sort((a, b) => getPostTime(a) - getPostTime(b));
+  if (sort === "title") return [...posts].sort((a, b) => String(a.title || "").localeCompare(String(b.title || ""), "ko"));
+  return sortPostsByLatest(posts);
+}
+
+function paginate(items, page, pageSize) {
+  const start = (page - 1) * pageSize;
+  return items.slice(start, start + pageSize);
+}
+
+function renderPagination(currentPage, totalPages, mode, collection) {
+  if (totalPages <= 1) return "";
+  const pages = getPaginationPages(currentPage, totalPages);
+
+  return `
+    <nav class="${mode === "admin" ? "admin-pagination" : "board-pagination"}" aria-label="페이지 이동">
+      <button type="button" data-action="page" data-collection="${collection}" data-page="1" ${currentPage === 1 ? "disabled" : ""}>처음</button>
+      <button type="button" data-action="page" data-collection="${collection}" data-page="${currentPage - 1}" ${currentPage === 1 ? "disabled" : ""}>‹ 이전</button>
+      ${pages.map((page) => page === "ellipsis" ? `<span aria-hidden="true">…</span>` : `<button type="button" data-action="page" data-collection="${collection}" data-page="${page}" ${page === currentPage ? `aria-current="page" class="is-active"` : ""}>${page}</button>`).join("")}
+      <button type="button" data-action="page" data-collection="${collection}" data-page="${currentPage + 1}" ${currentPage === totalPages ? "disabled" : ""}>다음 ›</button>
+      <button type="button" data-action="page" data-collection="${collection}" data-page="${totalPages}" ${currentPage === totalPages ? "disabled" : ""}>마지막</button>
+    </nav>
+  `;
+}
+
+function getPaginationPages(currentPage, totalPages) {
+  const pages = new Set([1, totalPages, currentPage, currentPage - 1, currentPage + 1, currentPage - 2, currentPage + 2]);
+  const sorted = [...pages].filter((page) => page >= 1 && page <= totalPages).sort((a, b) => a - b);
+  const result = [];
+  sorted.forEach((page, index) => {
+    if (index > 0 && page - sorted[index - 1] > 1) result.push("ellipsis");
+    result.push(page);
   });
+  return result;
+}
+
+function createBlankPost(collection) {
+  const meta = collectionMeta[collection];
+  return normalizePost({
+    id: createPostId(collection.replace(/s$/, "")),
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+    date: todayText(),
+    title: "",
+    summary: "",
+    body: "",
+    image: "",
+    category: meta.defaultCategory,
+    status: "published",
+    views: 0,
+    attachmentLabel: collection === "resources" ? "자료 보기" : "첨부 자료 보기",
+    attachmentUrl: "",
+    icon: "document",
+    pinned: false,
+    important: false,
+  }, collection, 0);
 }
 
 function normalizeContent(content, options = {}) {
@@ -624,15 +1237,10 @@ function normalizeContent(content, options = {}) {
     if (!Array.isArray(next[key])) next[key] = [];
   });
 
-  next.notices = next.notices.map((item, index) => normalizePost(item, "notices", index));
-  next.activities = next.activities.map((item, index) => normalizePost(item, "activities", index));
-  next.resources = next.resources.map((item, index) => normalizePost(item, "resources", index));
-
-  if (sortPosts) {
-    next.notices = sortPostsByLatest(next.notices);
-    next.activities = sortPostsByLatest(next.activities);
-    next.resources = sortPostsByLatest(next.resources);
-  }
+  POST_COLLECTIONS.forEach((collection) => {
+    next[collection] = next[collection].map((item, index) => normalizePost(item, collection, index));
+    if (sortPosts) next[collection] = sortPostsByLatest(next[collection]);
+  });
 
   if (!Array.isArray(next.site.sns)) next.site.sns = [];
   if (!Array.isArray(next.site.addressLines)) next.site.addressLines = [];
@@ -643,18 +1251,25 @@ function normalizeContent(content, options = {}) {
 }
 
 function normalizePost(item, collection, index) {
+  const meta = collectionMeta[collection];
   return {
     id: item.id || createPostId(collection, index),
-    createdAt: item.createdAt || item.created_at || "",
-    updatedAt: item.updatedAt || item.updated_at || "",
-    date: item.date || "",
+    createdAt: item.createdAt || item.created_at || item.date || nowIso(),
+    updatedAt: item.updatedAt || item.updated_at || item.createdAt || item.created_at || item.date || "",
+    date: item.date || todayText(),
     title: item.title || "",
     summary: item.summary || item.description || item.body || "",
-    body: item.body || item.description || item.summary || "",
+    body: item.body || item.content || item.description || item.summary || "",
     image: item.image || "",
     attachmentLabel: item.attachmentLabel || (collection === "resources" ? "자료 보기" : "첨부 자료 보기"),
     attachmentUrl: item.attachmentUrl || item.link || "",
     icon: item.icon || "document",
+    category: item.category || meta.defaultCategory,
+    status: item.status || "published",
+    author: item.author || "",
+    views: Number(item.views || 0),
+    pinned: Boolean(item.pinned),
+    important: Boolean(item.important),
     _uploads: item._uploads,
   };
 }
@@ -682,25 +1297,46 @@ function getIdTime(id) {
   return match ? Number(match[1]) : 0;
 }
 
-function hasPostChanged(previous, next) {
-  const fields = ["id", "date", "title", "summary", "body", "image", "attachmentLabel", "attachmentUrl", "icon"];
-  return Boolean(next._uploads) || fields.some((field) => String(previous?.[field] || "") !== String(next?.[field] || ""));
+function normalizeSearchText(value) {
+  return String(value || "").trim().toLowerCase();
 }
 
-function handleImagePreviewInput(event) {
-  const input = event.target.closest("[data-image-source='true']");
-  if (input) updateImagePreview(input);
+function getStatusLabel(status) {
+  return Object.fromEntries(statusOptions)[status] || "공개";
 }
 
-function handleImagePreviewChange(event) {
-  const uploadInput = event.target.closest("[data-upload-kind='image']");
-  const imageInput = event.target.closest("[data-image-source='true']");
+function formatDate(value) {
+  if (!value) return "-";
+  const time = getDateTime(value);
+  if (!time) return String(value).slice(0, 10);
+  const date = new Date(time);
+  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
+}
 
-  if (uploadInput) {
-    updateImagePreview(uploadInput);
-    return;
-  }
-  if (imageInput) updateImagePreview(imageInput);
+function formatDateTime(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("ko-KR", { dateStyle: "medium", timeStyle: "short" });
+}
+
+function getPostUrl(collection, item) {
+  return `post.html?type=${encodeURIComponent(collection)}&id=${encodeURIComponent(item.id || "")}`;
+}
+
+function renderOptions(options, selectedValue) {
+  return options.map(([value, label]) => `<option value="${escapeHtml(value)}"${String(value) === String(selectedValue) ? " selected" : ""}>${escapeHtml(label)}</option>`).join("");
+}
+
+function renderImagePreview(value) {
+  const src = String(value || "").trim();
+  const hasImage = Boolean(src);
+  return `
+    <div class="image-preview${hasImage ? " has-image" : ""}" data-image-preview>
+      <img src="${escapeHtml(src)}" alt="선택한 이미지 미리보기"${hasImage ? "" : " hidden"} />
+      <span${hasImage ? " hidden" : ""}>이미지를 선택하면 미리보기가 표시됩니다.</span>
+    </div>
+  `;
 }
 
 function updateImagePreview(control) {
@@ -712,7 +1348,6 @@ function updateImagePreview(control) {
     setImagePreview(preview, URL.createObjectURL(control.files[0]));
     return;
   }
-
   const source = field.querySelector("[data-image-source='true']");
   setImagePreview(preview, source?.value.trim() || "");
 }
@@ -734,16 +1369,10 @@ function setImagePreview(preview, src) {
     preview.classList.remove("has-image");
     return;
   }
-
   image.src = src;
-  image.alt = "선택한 이미지 미리보기";
   image.hidden = false;
   placeholder.hidden = true;
   preview.classList.add("has-image");
-}
-
-function toLines(value) {
-  return String(value || "").split("\n").map((line) => line.trim()).filter(Boolean);
 }
 
 async function fileToBase64(file) {
@@ -760,6 +1389,10 @@ function bytesToBase64(bytes) {
   return btoa(binary);
 }
 
+function toLines(value) {
+  return String(value || "").split("\n").map((line) => line.trim()).filter(Boolean);
+}
+
 function nowIso() {
   return new Date().toISOString();
 }
@@ -774,17 +1407,6 @@ function createPostId(prefix = "post", index = "") {
   return `${prefix}-${suffix}`;
 }
 
-function formatDateTime(value) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString("ko-KR", { dateStyle: "medium", timeStyle: "short" });
-}
-
-function markDirty() {
-  state.dirty = true;
-}
-
 function setSaveButtonState(status = "idle") {
   window.clearTimeout(state.saveResetTimer);
   saveButton.classList.remove("is-saving", "is-success", "is-error");
@@ -797,37 +1419,29 @@ function setSaveButtonState(status = "idle") {
     saveButton.innerHTML = `<span class="button-spinner" aria-hidden="true"></span><span>저장 중...</span>`;
     return;
   }
-
   if (status === "success") {
     saveButton.disabled = true;
     saveButton.classList.add("is-success");
     saveButton.innerHTML = `<span aria-hidden="true">✓</span><span>저장 완료</span>`;
-    state.saveResetTimer = window.setTimeout(() => setSaveButtonState("idle"), SAVE_RESET_DELAY);
+    state.saveResetTimer = window.setTimeout(() => {
+      syncTopbar();
+      setSaveButtonState("idle");
+    }, SAVE_RESET_DELAY);
     return;
   }
-
   if (status === "error") {
-    saveButton.disabled = !state.connected;
+    saveButton.disabled = false;
     saveButton.classList.add("is-error");
     saveButton.textContent = "다시 저장";
     return;
   }
-
-  saveButton.disabled = !state.connected;
-  saveButton.textContent = "저장하고 게시";
+  syncTopbar();
 }
 
-function focusNewItem(collection) {
-  const firstItem = document.querySelector(`.admin-item[data-collection="${collection}"]`);
-  if (!firstItem) return;
-
-  firstItem.scrollIntoView({ behavior: "smooth", block: "center" });
-  firstItem.querySelector("input:not([type='file']), textarea, select")?.focus({ preventScroll: true });
-
-  window.setTimeout(() => {
-    firstItem.classList.remove("is-highlighted");
-    if (state.highlightedCollection === collection) state.highlightedCollection = "";
-  }, 1200);
+function setStatus(message, type = "") {
+  statusMessage.textContent = message;
+  statusMessage.classList.toggle("is-error", type === "error");
+  statusMessage.classList.toggle("is-success", type === "success");
 }
 
 function showToast(message, type = "success") {
@@ -838,20 +1452,62 @@ function showToast(message, type = "success") {
     toast.className = "admin-toast";
     document.body.append(toast);
   }
-
   toast.textContent = message;
   toast.className = `admin-toast is-${type} is-visible`;
   toast.setAttribute("role", type === "error" ? "alert" : "status");
-  toast.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
-
   window.clearTimeout(showToast.timer);
   showToast.timer = window.setTimeout(() => toast.classList.remove("is-visible"), 2600);
 }
 
-function setStatus(message, type = "") {
-  statusMessage.textContent = message;
-  statusMessage.classList.toggle("is-error", type === "error");
-  statusMessage.classList.toggle("is-success", type === "success");
+function confirmDialog(message) {
+  return new Promise((resolve) => {
+    const modal = document.createElement("div");
+    modal.className = "admin-modal";
+    modal.innerHTML = `
+      <div class="admin-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="admin-confirm-title">
+        <h2 id="admin-confirm-title">삭제 확인</h2>
+        <p>${escapeHtml(message).replace(/\n/g, "<br />")}</p>
+        <div class="admin-modal__actions">
+          <button class="ghost-button" type="button" data-confirm="false">취소</button>
+          <button class="danger-button" type="button" data-confirm="true">삭제</button>
+        </div>
+      </div>
+    `;
+    document.body.append(modal);
+    const close = (value) => {
+      modal.removeEventListener("keydown", trapFocus);
+      modal.remove();
+      resolve(value);
+    };
+    const trapFocus = (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        close(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const focusable = [...modal.querySelectorAll("button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])")].filter((item) => !item.disabled);
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (!first || !last) return;
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    modal.addEventListener("keydown", trapFocus);
+    modal.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-confirm]");
+      if (button) close(button.dataset.confirm === "true");
+      if (event.target === modal) close(false);
+    });
+    modal.querySelector("[data-confirm='false']").focus();
+  });
 }
 
 function escapeHtml(value) {

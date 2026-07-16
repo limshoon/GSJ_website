@@ -226,18 +226,27 @@ const collectionConfig = {
     label: "공지사항",
     listUrl: "notice.html",
     empty: "등록된 공지사항이 없습니다.",
+    pageListSelector: "#notice-page-list",
+    pageClassName: "notice-entry notice-entry--link",
   },
   activities: {
     label: "활동",
     listUrl: "activity.html",
     empty: "등록된 활동이 없습니다.",
+    pageListSelector: "#activity-page-list",
+    pageClassName: "activity-card",
   },
   resources: {
     label: "자료실",
     listUrl: "resources.html",
     empty: "등록된 자료가 없습니다.",
+    pageListSelector: "#resources-page-list",
+    pageClassName: "resource-card",
   },
 };
+
+const BOARD_PAGE_SIZE = 20;
+const publicBoardState = {};
 
 let siteContent = cloneContent(fallbackContent);
 
@@ -330,6 +339,8 @@ function normalizeContent(content) {
 }
 
 function normalizePost(item, collection, index) {
+  const config = collectionConfig[collection] || {};
+
   return {
     id: item.id || makePostId(item, index),
     createdAt: item.createdAt || item.created_at || "",
@@ -342,6 +353,9 @@ function normalizePost(item, collection, index) {
     attachmentLabel: item.attachmentLabel || (collection === "resources" ? "자료 보기" : "첨부 자료 보기"),
     attachmentUrl: item.attachmentUrl || item.link || "",
     icon: item.icon || "document",
+    category: item.category || config.label || "",
+    status: item.status || "published",
+    author: item.author || "",
   };
 }
 
@@ -379,6 +393,10 @@ function getDateTime(value) {
 function getIdTime(id) {
   const match = String(id || "").match(/(\d{10,})/);
   return match ? Number(match[1]) : 0;
+}
+
+function normalizeSearchText(value) {
+  return String(value || "").trim().toLowerCase();
 }
 
 async function loadSiteContent() {
@@ -573,6 +591,119 @@ function renderBoardList(posts, collection, options = {}) {
     .join("");
 }
 
+function getPublicBoardState(collection) {
+  publicBoardState[collection] = publicBoardState[collection] || { query: "", page: 1 };
+  return publicBoardState[collection];
+}
+
+function getVisibleBoardPosts(posts) {
+  return posts.filter((post) => !["private", "draft"].includes(String(post.status || "published")));
+}
+
+function filterBoardPosts(posts, query) {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) return posts;
+
+  return posts.filter((post) => {
+    const haystack = normalizeSearchText([post.category, post.date, post.title, post.summary, post.body, post.author].join(" "));
+    return haystack.includes(normalizedQuery);
+  });
+}
+
+function renderPublicBoardPage(collection, posts, target, options = {}) {
+  const config = collectionConfig[collection];
+  const state = getPublicBoardState(collection);
+  const visiblePosts = getVisibleBoardPosts(posts);
+  const filteredPosts = filterBoardPosts(visiblePosts, state.query);
+  const totalPages = Math.max(1, Math.ceil(filteredPosts.length / BOARD_PAGE_SIZE));
+  state.page = Math.min(Math.max(1, Number(state.page || 1)), totalPages);
+
+  const pagePosts = filteredPosts.slice((state.page - 1) * BOARD_PAGE_SIZE, state.page * BOARD_PAGE_SIZE);
+  const resultText = state.query
+    ? `‘${escapeHtml(state.query)}’ 검색 결과 ${filteredPosts.length}건`
+    : `전체 ${filteredPosts.length}건`;
+
+  target.innerHTML = `
+    ${renderBoardToolbar(collection, state.query, resultText)}
+    ${pagePosts.length ? renderBoardList(pagePosts, collection, options) : renderBoardEmptyState(state.query, config.empty)}
+    ${renderBoardPagination(collection, state.page, totalPages)}
+  `;
+}
+
+function renderBoardEmptyState(query, defaultMessage) {
+  if (!query) return renderEmpty(defaultMessage);
+
+  return `
+    <div class="empty-state">
+      <strong>검색 결과가 없습니다.</strong>
+      <span>다른 검색어를 입력해 주세요.</span>
+    </div>
+  `;
+}
+
+function renderBoardToolbar(collection, query, resultText) {
+  const config = collectionConfig[collection];
+
+  return `
+    <form class="board-toolbar" data-board-toolbar data-collection="${collection}" role="search" aria-label="${escapeHtml(config.label)} 검색">
+      <label class="board-search-field">
+        <span class="sr-only">${escapeHtml(config.label)} 검색어</span>
+        <input name="query" value="${escapeHtml(query)}" placeholder="${escapeHtml(config.label)} 검색" autocomplete="off" />
+      </label>
+      <button class="board-search-button" type="submit">검색</button>
+      <button class="board-reset-button" type="button" data-board-action="reset" data-collection="${collection}" ${query ? "" : "disabled"}>초기화</button>
+      <p class="board-result-count">${resultText}</p>
+    </form>
+  `;
+}
+
+function renderBoardPagination(collection, currentPage, totalPages) {
+  if (totalPages <= 1) return "";
+  const pages = getPaginationPages(currentPage, totalPages);
+
+  return `
+    <nav class="board-pagination" aria-label="${escapeHtml(collectionConfig[collection].label)} 페이지 이동">
+      <button type="button" data-board-action="page" data-collection="${collection}" data-page="1" ${currentPage === 1 ? "disabled" : ""}>처음</button>
+      <button type="button" data-board-action="page" data-collection="${collection}" data-page="${currentPage - 1}" ${currentPage === 1 ? "disabled" : ""}>‹ 이전</button>
+      ${pages.map((page) => page === "ellipsis" ? `<span aria-hidden="true">…</span>` : `<button type="button" data-board-action="page" data-collection="${collection}" data-page="${page}" ${page === currentPage ? `class="is-active" aria-current="page"` : ""}>${page}</button>`).join("")}
+      <button type="button" data-board-action="page" data-collection="${collection}" data-page="${currentPage + 1}" ${currentPage === totalPages ? "disabled" : ""}>다음 ›</button>
+      <button type="button" data-board-action="page" data-collection="${collection}" data-page="${totalPages}" ${currentPage === totalPages ? "disabled" : ""}>마지막</button>
+    </nav>
+  `;
+}
+
+function getPaginationPages(currentPage, totalPages) {
+  const pages = new Set([1, totalPages, currentPage, currentPage - 1, currentPage + 1, currentPage - 2, currentPage + 2]);
+  const sortedPages = [...pages].filter((page) => page >= 1 && page <= totalPages).sort((a, b) => a - b);
+  const result = [];
+
+  sortedPages.forEach((page, index) => {
+    if (index > 0 && page - sortedPages[index - 1] > 1) result.push("ellipsis");
+    result.push(page);
+  });
+
+  return result;
+}
+
+function renderPublicBoardCollection(collection, shouldScroll = false) {
+  const config = collectionConfig[collection];
+  const target = config?.pageListSelector ? document.querySelector(config.pageListSelector) : null;
+  if (!target) return;
+
+  renderPublicBoardPage(collection, getArray(collection), target, {
+    className: config.pageClassName,
+    headingTag: "h2",
+  });
+  applyImageFallbacks();
+
+  if (shouldScroll) {
+    target.closest(".page-panel")?.scrollIntoView({
+      behavior: prefersReducedMotion.matches ? "auto" : "smooth",
+      block: "start",
+    });
+  }
+}
+
 function getSectionIconName(sectionId) {
   return {
     notice: "megaphone",
@@ -708,9 +839,7 @@ function renderNotices() {
   }
 
   if (noticePageList) {
-    noticePageList.innerHTML = notices.length
-      ? renderBoardList(notices, "notices", { className: "notice-entry notice-entry--link" })
-      : renderEmpty(collectionConfig.notices.empty);
+    renderPublicBoardCollection("notices");
   }
 }
 
@@ -719,12 +848,12 @@ function renderActivities() {
   const activityList = document.querySelector("#activity-list");
   const activityPageList = document.querySelector("#activity-page-list");
 
-  const markup = activities.length
+  const homeMarkup = activities.length
     ? renderBoardList(activities, "activities", { className: "activity-card", headingTag: activityPageList ? "h2" : "h3" })
     : renderEmpty(collectionConfig.activities.empty);
 
-  if (activityList) activityList.innerHTML = markup;
-  if (activityPageList) activityPageList.innerHTML = markup;
+  if (activityList) activityList.innerHTML = homeMarkup;
+  if (activityPageList) renderPublicBoardCollection("activities");
 }
 
 function renderResources() {
@@ -736,12 +865,8 @@ function renderResources() {
     ? renderBoardList(resources, "resources", { className: "resource-card", headingTag: "h3", limit: 4 })
     : renderEmpty(collectionConfig.resources.empty);
 
-  const pageMarkup = resources.length
-    ? renderBoardList(resources, "resources", { className: "resource-card" })
-    : renderEmpty(collectionConfig.resources.empty);
-
   if (resourceList) resourceList.innerHTML = homeMarkup;
-  if (resourcePageList) resourcePageList.innerHTML = pageMarkup;
+  if (resourcePageList) renderPublicBoardCollection("resources");
 }
 
 function renderAboutItems() {
@@ -1052,6 +1177,42 @@ function initMobileMenu() {
   });
 }
 
+function initBoardControls() {
+  document.addEventListener("submit", (event) => {
+    const form = event.target.closest("[data-board-toolbar]");
+    if (!form) return;
+
+    event.preventDefault();
+    const collection = form.dataset.collection;
+    const boardState = getPublicBoardState(collection);
+    const data = new FormData(form);
+
+    boardState.query = String(data.get("query") || "").trim();
+    boardState.page = 1;
+    renderPublicBoardCollection(collection, true);
+  });
+
+  document.addEventListener("click", (event) => {
+    const control = event.target.closest("[data-board-action]");
+    if (!control) return;
+
+    const collection = control.dataset.collection;
+    const boardState = getPublicBoardState(collection);
+    const action = control.dataset.boardAction;
+
+    if (action === "page") {
+      boardState.page = Number(control.dataset.page || 1);
+      renderPublicBoardCollection(collection, true);
+    }
+
+    if (action === "reset") {
+      boardState.query = "";
+      boardState.page = 1;
+      renderPublicBoardCollection(collection, true);
+    }
+  });
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   await loadSiteContent();
   renderAllSections();
@@ -1061,4 +1222,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   initScrollSpy();
   initBackToTop();
   initMobileMenu();
+  initBoardControls();
 });

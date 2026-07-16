@@ -8,8 +8,8 @@
     <link rel="icon" href="../assets/images/smitu-thumbnail.png" />
     <link rel="apple-touch-icon" href="../assets/images/smitu-thumbnail.png" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
-    <link rel="stylesheet" href="admin.css?v=20260716-site-login" />
-    <script src="admin-app.js?v=20260716-site-login" defer></script>
+    <link rel="stylesheet" href="admin.css?v=20260716-cms-list-final" />
+    <script src="admin-app.js?v=20260716-cms-list-final" defer></script>
   </head>
   <body class="admin-body">
     <aside class="admin-app-sidebar" aria-label="관리자 메뉴">
@@ -18,15 +18,16 @@
       </a>
 
       <nav class="admin-app-nav" aria-label="콘텐츠 관리">
-        <button class="admin-app-nav__link is-active" type="button" data-admin-section="home">홈</button>
-        <button class="admin-app-nav__link" type="button" data-admin-section="notices">공지사항</button>
-        <button class="admin-app-nav__link" type="button" data-admin-section="activities">활동</button>
-        <button class="admin-app-nav__link" type="button" data-admin-section="resources">자료실</button>
-        <button class="admin-app-nav__link" type="button" data-admin-section="contactItems">문의</button>
+        <button class="admin-app-nav__link is-active" type="button" data-admin-section="dashboard">대시보드</button>
+        <button class="admin-app-nav__link" type="button" data-admin-section="notices">공지사항 관리</button>
+        <button class="admin-app-nav__link" type="button" data-admin-section="activities">활동 관리</button>
+        <button class="admin-app-nav__link" type="button" data-admin-section="resources">자료실 관리</button>
+        <button class="admin-app-nav__link" type="button" data-admin-section="contactItems">문의 정보 관리</button>
       </nav>
 
       <div class="admin-app-sidebar__footer">
         <button type="button" data-admin-section="admins">관리자 승인</button>
+        <button type="button" data-admin-section="home">홈 화면 설정</button>
         <button type="button" data-admin-section="site">사이트 설정</button>
         <button type="button" data-admin-section="aboutItems">조합소개</button>
         <a href="../index.html" target="_blank" rel="noreferrer">사이트 보기</a>
