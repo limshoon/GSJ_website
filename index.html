@@ -8,7 +8,7 @@
       content="과학, 수학, 정보 교과의 교육 환경 개선과 조합원의 권익 보호를 위한 과수정 교원노동조합 공식 웹사이트"
     />
     <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#013DFD" />
+    <meta name="theme-color" content="#1346FF" />
     <link rel="canonical" href="https://smitu.kr/" />
     <link rel="sitemap" type="application/xml" href="https://smitu.kr/sitemap.xml" />
     <meta property="og:type" content="website" />
@@ -20,6 +20,9 @@
       content="과학, 수학, 정보 교과의 교육 환경 개선과 조합원의 권익 보호를 위한 과수정 교원노동조합 공식 웹사이트"
     />
     <meta property="og:url" content="https://smitu.kr/" />
+    <meta property="og:image" content="https://smitu.kr/assets/images/smitu-thumbnail.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://smitu.kr/assets/images/smitu-thumbnail.png" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -31,11 +34,13 @@
       }
     </script>
     <title>과수정 교원노동조합 | 과학·수학·정보 교과 노동조합</title>
-    <link rel="icon" href="assets/images/gsj-logo.png" />
+    <link rel="icon" href="assets/images/smitu-thumbnail.png" />
+    <link rel="apple-touch-icon" href="assets/images/smitu-thumbnail.png" />
     <!-- Pretendard CDN: 정적 사이트에서 별도 설치 없이 한국어 웹폰트를 적용합니다. -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
-    <link rel="stylesheet" href="css/style.css?v=20260715-left-title-scale" />
-    <script src="js/main.js" defer></script>
+    <link rel="stylesheet" href="css/style.css?v=20260716-activity-card-compact" />
+    <script src="js/liquid-glass-panel.js?v=20260716-activity-card-compact" defer></script>
+    <script src="js/main.js?v=20260716-activity-card-compact" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main">본문으로 바로가기</a>
@@ -43,7 +48,7 @@
     <!-- Sidebar -->
     <aside class="site-sidebar" aria-label="사이트 사이드바">
       <a class="site-logo" href="index.html#home" aria-label="과수정 교원노동조합 홈으로 이동">
-        <img class="site-logo__brand" src="assets/images/gsj-brand.png?v=20260715-brand-gap" alt="" aria-hidden="true" />
+        <img class="site-logo__brand" src="assets/images/smitu-logo-full.png?v=20260716-logo" alt="" aria-hidden="true" />
       </a>
 
       <button class="site-menu-button" type="button" aria-label="메뉴 열기" aria-controls="site-nav" aria-expanded="false">
@@ -58,8 +63,7 @@
           <li><a class="site-nav__link" href="notice.html" data-section="notice">공지사항</a></li>
           <li><a class="site-nav__link" href="activity.html" data-section="activity">활동</a></li>
           <li><a class="site-nav__link" href="resources.html" data-section="resources">자료실</a></li>
-          <li><a class="site-nav__link" href="index.html#about" data-section="about">조합소개</a></li>
-          <li><a class="site-nav__link" href="index.html#contact" data-section="contact">문의</a></li>
+          <li><a class="site-nav__link" href="contact.html" data-section="contact">문의</a></li>
         </ul>
       </nav>
     </aside>
@@ -68,7 +72,6 @@
       <!-- Home Section -->
       <section class="section section--home" id="home" aria-labelledby="home-title">
         <div class="hero glass-panel">
-          <span class="hero__dot" aria-hidden="true"></span>
           <div class="hero__content">
             <h1 class="hero__title" id="home-title">
               <span>과학.</span>
@@ -80,66 +83,35 @@
               과학, 수학, 정보 교과의 교육 환경 개선과 조합원의 권익 보호를 위해 함께 행동합니다.
             </p>
           </div>
-          <div class="hero__visual" aria-hidden="true">
-            <span>SCI</span>
-            <span>MATH</span>
-            <span>INFO</span>
+          <div class="hero__visual">
+            <div class="hero__logo-stage" role="img" aria-label="푸른 유리 질감으로 표현된 과수정 로고 심볼">
+              <img class="hero__logo-fallback" src="assets/images/smitu-symbol-mask.png" alt="" aria-hidden="true" />
+            </div>
           </div>
         </div>
       </section>
 
       <!-- Notice Section -->
-      <section class="section" id="notice" aria-labelledby="notice-title">
-        <div class="section-panel glass-panel">
-          <div class="section-panel__header">
+      <section class="section home-section-row" id="notice" aria-labelledby="notice-title">
+        <div class="section-panel glass-panel home-section">
+          <div class="section-panel__header home-section__header">
             <span class="section-panel__bar" aria-hidden="true"></span>
             <h2 class="section-panel__title" id="notice-title">공지사항</h2>
+            <p class="section-panel__copy">조합의 주요 일정과 소식을 확인할 수 있습니다.</p>
           </div>
-          <div class="notice-list" id="notice-list" role="list"></div>
-        </div>
-      </section>
-
-      <!-- Activity Section -->
-      <section class="section" id="activity" aria-labelledby="activity-title">
-        <div class="section-panel glass-panel">
-          <div class="section-panel__header">
-            <span class="section-panel__bar" aria-hidden="true"></span>
-            <h2 class="section-panel__title" id="activity-title">활동</h2>
-          </div>
-          <div class="card-grid card-grid--three" id="activity-list"></div>
-        </div>
-      </section>
-
-      <!-- Resources Section -->
-      <section class="section" id="resources" aria-labelledby="resources-title">
-        <div class="section-panel glass-panel">
-          <div class="section-panel__header">
-            <span class="section-panel__bar" aria-hidden="true"></span>
-            <h2 class="section-panel__title" id="resources-title">자료실</h2>
-          </div>
-          <div class="card-grid card-grid--four" id="resources-list"></div>
-        </div>
-      </section>
-
-      <!-- About Section -->
-      <section class="section" id="about" aria-labelledby="about-title">
-        <div class="section-panel glass-panel">
-          <div class="section-panel__header">
-            <span class="section-panel__bar" aria-hidden="true"></span>
-            <h2 class="section-panel__title" id="about-title">조합소개</h2>
-          </div>
-          <div class="info-grid" id="about-list"></div>
+          <div class="notice-list home-section__grid" id="notice-list" role="list"></div>
         </div>
       </section>
 
       <!-- Contact Section -->
-      <section class="section" id="contact" aria-labelledby="contact-title">
-        <div class="section-panel glass-panel">
-          <div class="section-panel__header">
+      <section class="section home-section-row" id="contact" aria-labelledby="contact-title">
+        <div class="section-panel glass-panel home-section">
+          <div class="section-panel__header home-section__header">
             <span class="section-panel__bar" aria-hidden="true"></span>
             <h2 class="section-panel__title" id="contact-title">문의</h2>
+            <p class="section-panel__copy">전화, 이메일, 방문 문의 정보를 확인할 수 있습니다.</p>
           </div>
-          <div class="card-grid card-grid--three" id="contact-list"></div>
+          <div class="card-grid card-grid--three home-section__grid" id="contact-list"></div>
         </div>
       </section>
     </main>

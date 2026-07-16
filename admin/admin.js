@@ -90,7 +90,9 @@ function init() {
   saveButton.addEventListener("click", handleSave);
   editor.addEventListener("click", handleEditorClick);
   editor.addEventListener("input", markDirty);
+  editor.addEventListener("input", handleImagePreviewInput);
   editor.addEventListener("change", markDirty);
+  editor.addEventListener("change", handleImagePreviewChange);
 
   loadPublicContent();
 }
@@ -362,8 +364,9 @@ function renderField(field, item, collectionKey = "", index = "") {
     return `
       <label class="wide-field" for="${fieldId}">
         <span>${escapeHtml(field.label)}</span>
-        <input id="${fieldId}" data-field="${escapeHtml(field.name)}" value="${escapeHtml(value)}" placeholder="assets/images/uploads/example.jpg" />
+        <input id="${fieldId}" data-field="${escapeHtml(field.name)}" data-image-source="true" value="${escapeHtml(value)}" placeholder="assets/images/uploads/example.jpg" />
         <input type="file" accept="image/*" data-upload-field="${escapeHtml(field.name)}" data-upload-kind="image" />
+        ${renderImagePreview(value)}
         <p class="helper-text">새 이미지를 선택하면 저장할 때 자동으로 업로드되고 경로가 채워집니다.</p>
       </label>
     `;
@@ -387,6 +390,81 @@ function renderField(field, item, collectionKey = "", index = "") {
       ${helper}
     </label>
   `;
+}
+
+function renderImagePreview(value) {
+  const src = String(value || "").trim();
+  const hasImage = Boolean(src);
+
+  return `
+    <div class="image-preview${hasImage ? " has-image" : ""}" data-image-preview>
+      <img src="${escapeHtml(src)}" alt="선택한 이미지 미리보기"${hasImage ? "" : " hidden"} />
+      <span${hasImage ? " hidden" : ""}>이미지를 선택하면 미리보기가 표시됩니다.</span>
+    </div>
+  `;
+}
+
+function handleImagePreviewInput(event) {
+  const input = event.target.closest("[data-image-source='true']");
+
+  if (!input) return;
+
+  updateImagePreview(input);
+}
+
+function handleImagePreviewChange(event) {
+  const uploadInput = event.target.closest("[data-upload-kind='image']");
+  const imageInput = event.target.closest("[data-image-source='true']");
+
+  if (uploadInput) {
+    updateImagePreview(uploadInput);
+    return;
+  }
+
+  if (imageInput) updateImagePreview(imageInput);
+}
+
+function updateImagePreview(control) {
+  const field = control.closest(".wide-field");
+  const preview = field?.querySelector("[data-image-preview]");
+
+  if (!preview) return;
+
+  if (control.matches("[data-upload-kind='image']") && control.files[0]) {
+    setImagePreview(preview, URL.createObjectURL(control.files[0]));
+    return;
+  }
+
+  const source = field.querySelector("[data-image-source='true']");
+  setImagePreview(preview, source?.value.trim() || "");
+}
+
+function setImagePreview(preview, src) {
+  const image = preview.querySelector("img");
+  const placeholder = preview.querySelector("span");
+
+  if (preview.dataset.objectUrl) {
+    URL.revokeObjectURL(preview.dataset.objectUrl);
+    delete preview.dataset.objectUrl;
+  }
+
+  if (src && src.startsWith("blob:")) {
+    preview.dataset.objectUrl = src;
+  }
+
+  if (!src) {
+    image.hidden = true;
+    image.removeAttribute("src");
+    placeholder.hidden = false;
+    preview.classList.remove("has-image");
+    return;
+  }
+
+  image.src = src;
+  image.alt = "선택한 이미지 미리보기";
+  image.hidden = false;
+  placeholder.hidden = true;
+  preview.classList.add("has-image");
 }
 
 function handleEditorClick(event) {

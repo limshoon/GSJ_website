@@ -1,31 +1,214 @@
 const contentPath = "content/site.json";
 
 const fallbackContent = {
-  site: {
-    name: "과수정 교원노동조합",
-    description: "과학, 수학, 정보 교과의 교육 환경 개선과 조합원의 권익 보호를 위한 과수정 교원노동조합 공식 웹사이트",
-    officeName: "과수정 교원노동조합 사무실",
-    addressLines: ["서울특별시 00구 00로 00 0000빌딩 000호"],
-    phone: "02-000-0000",
-    email: "smi.union@example.com",
-    copyright: "© 2024 과수정 교원노동조합. ALL RIGHTS RESERVED.",
-    sns: [
-      { label: "Instagram", url: "#" },
-      { label: "Facebook", url: "#" },
-      { label: "YouTube", url: "#" },
+  "site": {
+    "name": "과수정 교원노동조합",
+    "description": "과학, 수학, 정보 교과의 교육 환경 개선과 조합원의 권익 보호를 위한 과수정 교원노동조합 공식 웹사이트",
+    "officeName": "과수정 교원노동조합 사무실",
+    "addressLines": [
+      "서울특별시 00구 00로 00 0000빌딩 000호"
     ],
+    "phone": "02-000-0000",
+    "email": "smi.union@example.com",
+    "copyright": "© 2024 과수정 교원노동조합. ALL RIGHTS RESERVED.",
+    "sns": [
+      {
+        "label": "Instagram",
+        "url": "#"
+      },
+      {
+        "label": "Facebook",
+        "url": "#"
+      },
+      {
+        "label": "YouTube",
+        "url": "#"
+      }
+    ]
   },
-  home: {
-    titleLines: ["과학.", "수학.", "정보."],
-    subtitle: "우리의 권리, 우리의 연대.",
-    copy: "과학, 수학, 정보 교과의 교육 환경 개선과 조합원의 권익 보호를 위해 함께 행동합니다.",
-    visualWords: ["SCI", "MATH", "INFO"],
+  "home": {
+    "titleLines": [
+      "과학.",
+      "수학.",
+      "정보."
+    ],
+    "subtitle": "우리의 권리, 우리의 연대.",
+    "copy": "과학, 수학, 정보 교과의 교육 환경 개선과 조합원의 권익 보호를 위해 함께 행동합니다.",
+    "visualWords": [
+      "SCI",
+      "MATH",
+      "INFO"
+    ]
   },
-  notices: [],
-  activities: [],
-  resources: [],
-  aboutItems: [],
-  contactItems: [],
+  "notices": [
+    {
+      "id": "notice-1784102871330",
+      "date": "2026.07.15",
+      "title": "TEST 냥냥",
+      "summary": "TEST 냥냥",
+      "body": "TEST 냥냥",
+      "image": "",
+      "attachmentLabel": "첨부 자료 보기",
+      "attachmentUrl": "",
+      "icon": "document"
+    },
+    {
+      "id": "wage-agreement-2024",
+      "date": "2024.05.20",
+      "title": "2024년 임금·단체협약 교섭 요구안 확정",
+      "summary": "조합원 의견 수렴을 바탕으로 2024년 임금·단체협약 교섭 요구안을 확정했습니다.",
+      "body": "조합원 의견 수렴을 바탕으로 2024년 임금·단체협약 교섭 요구안을 확정했습니다.\n\n세부 교섭 일정과 주요 요구 항목은 확정되는 대로 조합원 안내를 통해 공유하겠습니다.",
+      "image": "",
+      "attachmentLabel": "첨부 자료 보기",
+      "attachmentUrl": "",
+      "icon": "document"
+    },
+    {
+      "id": "regular-meeting-12",
+      "date": "2024.05.10",
+      "title": "제12차 과수정 교원노동조합 정기총회 안내",
+      "summary": "정기총회 일정과 안건을 안내드립니다. 조합원 여러분의 많은 참여를 부탁드립니다.",
+      "body": "제12차 과수정 교원노동조합 정기총회 일정과 안건을 안내드립니다.\n\n조합원 여러분의 많은 참여를 부탁드리며, 참석이 어려운 경우 위임 절차를 확인해주시기 바랍니다.",
+      "image": "",
+      "attachmentLabel": "총회 자료 보기",
+      "attachmentUrl": "",
+      "icon": "document"
+    },
+    {
+      "id": "education-environment-survey",
+      "date": "2024.04.28",
+      "title": "과수정 교과 연구·교육 환경 실태 설문조사 결과",
+      "summary": "과학·수학·정보 교과의 교육 환경 실태 설문조사 주요 결과를 공유합니다.",
+      "body": "과학·수학·정보 교과의 교육 환경 실태 설문조사 주요 결과를 공유합니다.\n\n응답 결과는 향후 교섭 요구와 정책 제안의 기초 자료로 활용할 예정입니다.",
+      "image": "",
+      "attachmentLabel": "조사 결과 보기",
+      "attachmentUrl": "",
+      "icon": "document"
+    }
+  ],
+  "activities": [
+    {
+      "id": "bargaining-meeting",
+      "date": "2024.05.18",
+      "title": "교섭 회의 진행",
+      "summary": "임금·단체협약 교섭을 위한 제3차 회의를 진행했습니다.",
+      "body": "임금·단체협약 교섭을 위한 제3차 회의를 진행했습니다.\n\n조합은 현장의 요구가 교섭 과정에 반영될 수 있도록 계속해서 의견을 모으고 있습니다.",
+      "image": "assets/images/activity-01.jpg",
+      "attachmentLabel": "첨부 자료 보기",
+      "attachmentUrl": "",
+      "icon": "document"
+    },
+    {
+      "id": "education-campaign",
+      "date": "2024.04.22",
+      "title": "교육 환경 개선 캠페인",
+      "summary": "전국 동시 캠페인으로 교육 환경 개선을 촉구했습니다.",
+      "body": "전국 동시 캠페인으로 교육 환경 개선을 촉구했습니다.\n\n과학·수학·정보 교과의 안정적인 수업 환경 마련을 위해 현장 의견을 알리는 활동을 이어가겠습니다.",
+      "image": "assets/images/activity-02.jpg",
+      "attachmentLabel": "첨부 자료 보기",
+      "attachmentUrl": "",
+      "icon": "document"
+    },
+    {
+      "id": "member-training",
+      "date": "2024.03.30",
+      "title": "조합원 교육 연수",
+      "summary": "교권 보호와 노동 권리에 대한 연수를 진행했습니다.",
+      "body": "교권 보호와 노동 권리에 대한 조합원 교육 연수를 진행했습니다.\n\n연수 자료와 후속 안내는 자료실을 통해 순차적으로 공유할 예정입니다.",
+      "image": "assets/images/activity-03.jpg",
+      "attachmentLabel": "첨부 자료 보기",
+      "attachmentUrl": "",
+      "icon": "document"
+    }
+  ],
+  "resources": [
+    {
+      "id": "policy-resources",
+      "date": "2024.05.01",
+      "title": "정책 자료",
+      "summary": "교육 정책 및 법령, 제도 관련 자료를 확인할 수 있습니다.",
+      "body": "교육 정책 및 법령, 제도 관련 자료를 확인할 수 있습니다.\n\n관리자는 자료 파일을 업로드하거나 외부 자료 링크를 연결할 수 있습니다.",
+      "image": "",
+      "attachmentLabel": "자료 보기",
+      "attachmentUrl": "",
+      "icon": "document"
+    },
+    {
+      "id": "research-resources",
+      "date": "2024.04.25",
+      "title": "연구 자료",
+      "summary": "과수정 교과 연구 및 교육 관련 연구 자료를 제공합니다.",
+      "body": "과수정 교과 연구 및 교육 관련 연구 자료를 제공합니다.\n\n새 자료가 등록되면 제목을 눌러 상세 내용을 확인할 수 있습니다.",
+      "image": "",
+      "attachmentLabel": "자료 보기",
+      "attachmentUrl": "",
+      "icon": "document"
+    },
+    {
+      "id": "teaching-resources",
+      "date": "2024.04.15",
+      "title": "교육 자료",
+      "summary": "수업 자료, 교수법, 평가 자료 등을 공유합니다.",
+      "body": "수업 자료, 교수법, 평가 자료 등을 공유합니다.\n\n현장에서 활용 가능한 자료를 지속적으로 정리해 게시할 예정입니다.",
+      "image": "",
+      "attachmentLabel": "자료 보기",
+      "attachmentUrl": "",
+      "icon": "document"
+    },
+    {
+      "id": "union-resources",
+      "date": "2024.04.01",
+      "title": "조합 자료",
+      "summary": "조합 규약, 회의록, 보고서 등 조합 내부 자료를 제공합니다.",
+      "body": "조합 규약, 회의록, 보고서 등 조합 내부 자료를 제공합니다.\n\n필요한 자료는 관리자 페이지에서 직접 추가할 수 있습니다.",
+      "image": "",
+      "attachmentLabel": "자료 보기",
+      "attachmentUrl": "",
+      "icon": "document"
+    }
+  ],
+  "aboutItems": [
+    {
+      "title": "우리는 누구인가",
+      "description": "과학·수학·정보 교사의 권리와 전문성을 지키는 노동조합입니다.",
+      "icon": "people"
+    },
+    {
+      "title": "우리의 목표",
+      "description": "더 나은 교육 환경과 조합원의 권익 보호를 위해 힘쓰고 있습니다.",
+      "icon": "handshake"
+    },
+    {
+      "title": "우리의 원칙",
+      "description": "연대, 참여, 권리를 바탕으로 민주적이고 투명하게 운영됩니다.",
+      "icon": "shield"
+    },
+    {
+      "title": "연혁",
+      "description": "과수정 교원노동조합의 걸어온 길과 주요 활동을 소개합니다.",
+      "icon": "flag"
+    }
+  ],
+  "contactItems": [
+    {
+      "title": "전화 문의",
+      "main": "02-000-0000",
+      "sub": "평일 09:00 - 18:00",
+      "icon": "phone"
+    },
+    {
+      "title": "이메일 문의",
+      "main": "smi.union@example.com",
+      "sub": "이메일 문의",
+      "icon": "mail"
+    },
+    {
+      "title": "방문 문의",
+      "main": "서울특별시 00구 00로 00",
+      "sub": "0000빌딩 000호 / 과수정 교원노동조합 사무실",
+      "icon": "map"
+    }
+  ]
 };
 
 const collectionConfig = {
@@ -189,6 +372,11 @@ function getIdTime(id) {
 }
 
 async function loadSiteContent() {
+  if (window.location.protocol === "file:") {
+    siteContent = normalizeContent(fallbackContent);
+    return;
+  }
+
   try {
     const response = await fetch(`${contentPath}?v=${Date.now()}`, { cache: "no-store" });
 
@@ -217,6 +405,161 @@ function toDateTime(dateText) {
 
 function getIcon(name) {
   return icons[name] || icons.document;
+}
+
+function getGlassIconName(name, fallback = "orbit") {
+  const normalized = String(name || "").toLowerCase();
+  const iconMap = {
+    megaphone: "megaphone",
+    runner: "runner",
+    file: "file",
+    phone: "phone",
+    message: "message",
+    orbit: "orbit",
+    notice: "megaphone",
+    notices: "megaphone",
+    document: "file",
+    resources: "file",
+    resource: "file",
+    activity: "runner",
+    activities: "runner",
+    people: "orbit",
+    handshake: "orbit",
+    shield: "orbit",
+    flag: "orbit",
+    call: "phone",
+    mail: "message",
+    map: "message",
+    contact: "phone",
+  };
+
+  return iconMap[normalized] || fallback;
+}
+
+function getGlassIconSvg(name) {
+  const icon = getGlassIconName(name);
+  const paths = {
+    megaphone: `
+      <path d="M5.2 13.6H3.8a1.8 1.8 0 0 1 0-3.6h1.4l8.6-4v11.6z"/>
+      <path d="M7 13.6 8.4 19h3.1l-1.7-5.4"/>
+      <path d="M16.2 9.2a3.7 3.7 0 0 1 0 5.2"/>
+      <path d="M18.4 6.8a7 7 0 0 1 0 10"/>
+    `,
+    runner: `
+      <path d="M13.6 5.1a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6Z"/>
+      <path d="m9.4 10.4 2.5-3 3.4 2.1 2.3-.8"/>
+      <path d="m11.9 7.4-1.3 5.1 3 2.3 1.1 4.2"/>
+      <path d="m10.6 12.5-3 2.4-2.1 3.7"/>
+      <path d="M4.5 21h15"/>
+    `,
+    file: `
+      <path d="M6.5 3.8h7.2l3.8 3.9v12.5h-11z"/>
+      <path d="M13.5 3.8v4.2h4"/>
+      <path d="M9.1 12.2h5.8M9.1 15.5h5.8"/>
+    `,
+    phone: `
+      <path d="M7.5 4.5 5.2 6.8c-.7.7-.8 1.8-.4 2.7 1.9 4.2 5.5 7.8 9.7 9.7.9.4 2 .3 2.7-.4l2.3-2.3-3.4-3-2 2c-2.5-1.1-4.5-3.1-5.6-5.6l2-2z"/>
+    `,
+    message: `
+      <path d="M5.2 6.5h13.6v9.1H9.5L5.2 19z"/>
+      <path d="M8.3 10h7.4M8.3 13h4.6"/>
+    `,
+    orbit: `
+      <path d="M5.4 15.3c2.6-4.7 7.1-8.2 12.8-9.6"/>
+      <path d="M6.8 6.9a7.2 7.2 0 0 1 10.4 9.8"/>
+      <path d="M8.8 17.1a7.2 7.2 0 0 1-1-8.2"/>
+      <path d="M17.4 5.4h.1"/>
+    `,
+  };
+
+  return `
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      ${paths[icon] || paths.orbit}
+    </svg>
+  `;
+}
+
+function renderGlassIcon(name, className = "") {
+  const icon = getGlassIconName(name);
+  return `<span class="glass-icon glass-icon--${icon}${className ? ` ${className}` : ""}" aria-hidden="true">${getGlassIconSvg(icon)}</span>`;
+}
+
+function renderCardArrow(label = "상세 보기") {
+  return `<span class="card-arrow" aria-hidden="true">→</span><span class="sr-only">${escapeHtml(label)}</span>`;
+}
+
+function renderBoardPreview(post, title, collection) {
+  if (!post.image || !["notices", "activities"].includes(collection)) return "";
+
+  return `
+    <figure class="board-list__preview">
+      <img src="${escapeHtml(post.image)}" alt="${escapeHtml(title)} 이미지 미리보기" loading="lazy" />
+    </figure>
+  `;
+}
+
+function getPostDateTime(post) {
+  return getDateTime(post.date) || getPostTime(post);
+}
+
+function getLatestPostsByDate(posts, limit = 3) {
+  return [...posts]
+    .sort((a, b) => {
+      const primary = getPostDateTime(b) - getPostDateTime(a);
+      if (primary !== 0) return primary;
+
+      const secondary = getDateTime(b.updatedAt || b.updated_at) - getDateTime(a.updatedAt || a.updated_at);
+      if (secondary !== 0) return secondary;
+
+      return String(b.id || "").localeCompare(String(a.id || ""));
+    })
+    .slice(0, limit);
+}
+
+function hasBoardPreview(post, collection) {
+  return Boolean(post.image && ["notices", "activities"].includes(collection));
+}
+
+function renderBoardList(posts, collection, options = {}) {
+  const config = collectionConfig[collection];
+  const headingTag = options.headingTag || "h2";
+  const limit = options.limit || posts.length;
+  const className = options.className || "";
+  const ariaRole = options.roleItem ? ` role="${options.roleItem}"` : "";
+
+  return posts
+    .slice(0, limit)
+    .map((post, index) => {
+      const title = escapeHtml(post.title);
+      const summary = escapeHtml(post.summary || post.body);
+      const url = escapeHtml(getPostUrl(collection, post, index));
+      const previewClass = hasBoardPreview(post, collection) ? " has-preview" : "";
+
+      return `
+        <a class="board-list__item ${className}${previewClass}" href="${url}"${ariaRole} aria-label="${title}">
+          ${renderBoardPreview(post, title, collection)}
+          <div class="board-list__meta">
+            <span class="card-kicker">${escapeHtml(config.label)}</span>
+            <time class="board-list__date" datetime="${toDateTime(post.date)}">${escapeHtml(post.date)}</time>
+          </div>
+          <${headingTag} class="board-list__title">${title}</${headingTag}>
+          <p class="board-list__summary">${summary}</p>
+          ${renderCardArrow(`${config.label} 상세 보기`)}
+        </a>
+      `;
+    })
+    .join("");
+}
+
+function getSectionIconName(sectionId) {
+  return {
+    notice: "megaphone",
+    notices: "megaphone",
+    activity: "runner",
+    resources: "file",
+    about: "orbit",
+    contact: "phone",
+  }[sectionId] || "orbit";
 }
 
 function getArray(key) {
@@ -276,7 +619,6 @@ function renderHero() {
   const title = document.querySelector("#home-title");
   const subtitle = document.querySelector(".hero__subtitle");
   const copy = document.querySelector(".hero__copy");
-  const visual = document.querySelector(".hero__visual");
 
   if (title) {
     title.innerHTML = (hero.titleLines || []).map((line) => `<span>${escapeHtml(line)}</span>`).join("");
@@ -285,9 +627,6 @@ function renderHero() {
   if (subtitle) subtitle.textContent = hero.subtitle || "";
   if (copy) copy.textContent = hero.copy || "";
 
-  if (visual) {
-    visual.innerHTML = (hero.visualWords || []).map((word) => `<span>${escapeHtml(word)}</span>`).join("");
-  }
 }
 
 function renderFooter() {
@@ -310,9 +649,28 @@ function renderFooter() {
   if (snsList) {
     snsList.innerHTML = (site.sns || [])
       .filter((item) => item.label)
-      .map((item) => `<li><a href="${escapeHtml(item.url || "#")}" aria-label="${escapeHtml(item.label)}">${escapeHtml(item.label)}</a></li>`)
+      .map(
+        (item) => `
+          <li>
+            <a href="${escapeHtml(item.url || "#")}" aria-label="${escapeHtml(item.label)}">
+              ${getSnsIcon(item.label)}
+            </a>
+          </li>
+        `
+      )
       .join("");
   }
+}
+
+function getSnsIcon(label) {
+  const name = String(label || "").toLowerCase();
+  const icon = name.includes("instagram")
+    ? `<rect x="6.5" y="6.5" width="11" height="11" rx="3.2"/><path d="M15.4 8.7h.1"/><circle cx="12" cy="12" r="3"/>`
+    : name.includes("youtube")
+      ? `<rect x="4.5" y="7.2" width="15" height="9.6" rx="2.8"/><path d="m10.8 10.2 4 1.8-4 1.8z"/>`
+      : `<path d="M8.2 21v-7.2H5.8v-3h2.4V8.6c0-2.4 1.4-3.7 3.6-3.7 1 0 2 .2 2 .2v2.3h-1.1c-1.1 0-1.5.7-1.5 1.4v2h2.5l-.4 3h-2.1V21"/>`;
+
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">${icon}</svg>`;
 }
 
 function renderNotices() {
@@ -321,35 +679,15 @@ function renderNotices() {
   const noticePageList = document.querySelector("#notice-page-list");
 
   if (noticeList) {
+    const latestNotices = getLatestPostsByDate(notices, 3);
     noticeList.innerHTML = notices.length
-      ? notices
-          .slice(0, 5)
-          .map(
-            (notice, index) => `
-              <a class="notice-list__item" href="${escapeHtml(getPostUrl("notices", notice, index))}" role="listitem" aria-label="${escapeHtml(notice.title)}">
-                <time class="notice-list__date" datetime="${toDateTime(notice.date)}">${escapeHtml(notice.date)}</time>
-                <span class="notice-list__title">${escapeHtml(notice.title)}</span>
-                <span class="notice-list__arrow" aria-hidden="true">→</span>
-              </a>
-            `
-          )
-          .join("")
+      ? renderBoardList(latestNotices, "notices", { className: "notice-list__item", headingTag: "h3", roleItem: "listitem" })
       : renderEmpty(collectionConfig.notices.empty);
   }
 
   if (noticePageList) {
     noticePageList.innerHTML = notices.length
-      ? notices
-          .map(
-            (notice, index) => `
-              <a class="notice-entry notice-entry--link" href="${escapeHtml(getPostUrl("notices", notice, index))}">
-                <time class="notice-entry__date" datetime="${toDateTime(notice.date)}">${escapeHtml(notice.date)}</time>
-                <h2 class="notice-entry__title">${escapeHtml(notice.title)}</h2>
-                <p class="notice-entry__body">${escapeHtml(notice.summary || notice.body)}</p>
-              </a>
-            `
-          )
-          .join("")
+      ? renderBoardList(notices, "notices", { className: "notice-entry notice-entry--link" })
       : renderEmpty(collectionConfig.notices.empty);
   }
 }
@@ -360,22 +698,7 @@ function renderActivities() {
   const activityPageList = document.querySelector("#activity-page-list");
 
   const markup = activities.length
-    ? activities
-        .map(
-          (activity, index) => `
-            <a class="activity-card" href="${escapeHtml(getPostUrl("activities", activity, index))}">
-              <div class="activity-card__image">
-                <img src="${escapeHtml(activity.image || "")}" alt="${escapeHtml(activity.title)} 활동 사진" loading="lazy" />
-              </div>
-              <div class="activity-card__body">
-                <time class="activity-card__date" datetime="${toDateTime(activity.date)}">${escapeHtml(activity.date)}</time>
-                <h3 class="activity-card__title">${escapeHtml(activity.title)}</h3>
-                <p class="activity-card__description">${escapeHtml(activity.summary || activity.body)}</p>
-              </div>
-            </a>
-          `
-        )
-        .join("")
+    ? renderBoardList(activities, "activities", { className: "activity-card", headingTag: activityPageList ? "h2" : "h3" })
     : renderEmpty(collectionConfig.activities.empty);
 
   if (activityList) activityList.innerHTML = markup;
@@ -388,34 +711,11 @@ function renderResources() {
   const resourcePageList = document.querySelector("#resources-page-list");
 
   const homeMarkup = resources.length
-    ? resources
-        .slice(0, 4)
-        .map(
-          (resource, index) => `
-            <a class="resource-card" href="${escapeHtml(getPostUrl("resources", resource, index))}">
-              <span class="icon">${getIcon(resource.icon)}</span>
-              <h3 class="resource-card__title">${escapeHtml(resource.title)}</h3>
-              <p class="resource-card__description">${escapeHtml(resource.summary || resource.body)}</p>
-            </a>
-          `
-        )
-        .join("")
+    ? renderBoardList(resources, "resources", { className: "resource-card", headingTag: "h3", limit: 4 })
     : renderEmpty(collectionConfig.resources.empty);
 
   const pageMarkup = resources.length
-    ? resources
-        .map(
-          (resource, index) => `
-            <a class="resource-card" href="${escapeHtml(getPostUrl("resources", resource, index))}">
-              <span class="icon">${getIcon(resource.icon)}</span>
-              <time class="resource-card__date" datetime="${toDateTime(resource.date)}">${escapeHtml(resource.date)}</time>
-              <h2 class="resource-card__title">${escapeHtml(resource.title)}</h2>
-              <p class="resource-card__description">${escapeHtml(resource.summary || resource.body)}</p>
-              <span class="resource-card__link">상세 보기</span>
-            </a>
-          `
-        )
-        .join("")
+    ? renderBoardList(resources, "resources", { className: "resource-card" })
     : renderEmpty(collectionConfig.resources.empty);
 
   if (resourceList) resourceList.innerHTML = homeMarkup;
@@ -433,8 +733,9 @@ function renderAboutItems() {
         .map(
           (item) => `
             <article class="info-item">
-              <span class="icon">${getIcon(item.icon)}</span>
+              ${renderGlassIcon("orbit")}
               <div>
+                <span class="card-kicker">조합소개</span>
                 <h3 class="info-item__title">${escapeHtml(item.title)}</h3>
                 <p class="info-item__description">${escapeHtml(item.description)}</p>
               </div>
@@ -445,28 +746,113 @@ function renderAboutItems() {
     : renderEmpty("등록된 소개 항목이 없습니다.");
 }
 
+function getContactKind(item, index = 0) {
+  const text = `${item.title || ""} ${item.icon || ""}`.toLowerCase();
+  if (text.includes("이메일") || text.includes("mail")) return "email";
+  if (text.includes("방문") || text.includes("주소") || text.includes("map")) return "visit";
+  if (text.includes("전화") || text.includes("phone")) return "phone";
+  return ["phone", "email", "visit"][index] || "phone";
+}
+
+function getContactLabel(kind) {
+  return { phone: "PHONE", email: "EMAIL", visit: "VISIT" }[kind] || "CONTACT";
+}
+
+function normalizePhoneHref(value) {
+  const phone = String(value || "").replace(/[^\d+]/g, "");
+  return phone ? `tel:${phone}` : "#";
+}
+
+function normalizeMailHref(value) {
+  const email = String(value || "").trim();
+  return email ? `mailto:${email}` : "#";
+}
+
+function getDirectionsUrl(item) {
+  const address = [item.main, item.sub].filter(Boolean).join(" ");
+  return `https://map.kakao.com/link/search/${encodeURIComponent(address || "과수정 교원노동조합")}`;
+}
+
+function renderContactListItem(item, index = 0) {
+  const kind = getContactKind(item, index);
+  const title = escapeHtml(item.title);
+  const main = escapeHtml(item.main);
+  const sub = escapeHtml(item.sub);
+
+  if (kind === "visit") {
+    return `
+      <article class="contact-list-item contact-list-item--visit">
+        <div class="contact-list-item__content">
+          <span class="contact-list-item__label">${getContactLabel(kind)}</span>
+          <h2 class="contact-list-item__title">${title}</h2>
+          <p class="contact-list-item__main">${main}</p>
+          <p class="contact-list-item__sub">${sub}</p>
+          <p class="contact-list-item__note">평일 09:00 - 18:00</p>
+          <a class="contact-directions-link" href="${escapeHtml(getDirectionsUrl(item))}" target="_blank" rel="noreferrer">
+            길찾기 <span aria-hidden="true">→</span>
+          </a>
+        </div>
+        <div class="contact-map" id="contact-map" data-address="${escapeHtml([item.main, item.sub].filter(Boolean).join(" "))}">
+          <div class="contact-map__placeholder">
+            <span class="contact-map__pin" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M12 21s6-5.2 6-11a6 6 0 0 0-12 0c0 5.8 6 11 6 11Z"/>
+                <path d="M12 12.4a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8Z"/>
+              </svg>
+            </span>
+            <strong>지도 영역</strong>
+            <p>주소 설정 후 지도를 표시할 수 있습니다.</p>
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  const href = kind === "email" ? normalizeMailHref(item.main) : normalizePhoneHref(item.main);
+  const linkLabel = kind === "email" ? "이메일 보내기" : "전화 연결";
+  const note = kind === "email" ? "문의 내용을 보내주시면 확인 후 순차적으로 답변드립니다." : "주말 및 공휴일 휴무";
+
+  return `
+    <article class="contact-list-item">
+      <div class="contact-list-item__label-block">
+        <span class="contact-list-item__label">${getContactLabel(kind)}</span>
+        <h2 class="contact-list-item__title">${title}</h2>
+      </div>
+      <div class="contact-list-item__details">
+        <a class="contact-list-item__main contact-list-item__link" href="${escapeHtml(href)}" aria-label="${escapeHtml(linkLabel)}">
+          ${main}
+        </a>
+        <p class="contact-list-item__sub">${sub}</p>
+        <p class="contact-list-item__note">${escapeHtml(note)}</p>
+      </div>
+    </article>
+  `;
+}
+
 function renderContactItems() {
   const contactList = document.querySelector("#contact-list");
+  const contactPageList = document.querySelector("#contact-page-list");
 
-  if (!contactList) return;
+  if (!contactList && !contactPageList) return;
 
   const contactItems = getArray("contactItems");
-  contactList.innerHTML = contactItems.length
+  const markup = contactItems.length
     ? contactItems
-        .map(
-          (item) => `
-            <article class="contact-card">
-              <span class="icon">${getIcon(item.icon)}</span>
-              <div>
-                <h3 class="contact-card__title">${escapeHtml(item.title)}</h3>
-                <p class="contact-card__main">${escapeHtml(item.main)}</p>
-                <p class="contact-card__sub">${escapeHtml(item.sub)}</p>
-              </div>
-            </article>
-          `
-        )
+        .map((item, index) => renderContactListItem(item, index))
         .join("")
     : renderEmpty("등록된 문의 항목이 없습니다.");
+
+  if (contactList) contactList.innerHTML = markup;
+  if (contactPageList) contactPageList.innerHTML = markup;
+  if (typeof window.initContactMap === "function") window.initContactMap();
+}
+
+function hydrateSectionGlassIcons() {
+  document.querySelectorAll(".section-panel__bar").forEach((bar) => {
+    if (bar.classList.contains("glass-icon")) return;
+    const sectionId = bar.closest(".section[id]")?.id || "orbit";
+    bar.outerHTML = renderGlassIcon(getSectionIconName(sectionId), "section-panel__bar");
+  });
 }
 
 function renderPostDetail() {
@@ -519,10 +905,17 @@ function renderAllSections() {
   renderContactItems();
   renderPostDetail();
   renderFooter();
+  hydrateSectionGlassIcons();
+}
+
+function initGlassLogoHero() {
+  if (typeof window.initGlassLogo === "function") {
+    window.initGlassLogo(".hero__logo-stage");
+  }
 }
 
 function applyImageFallbacks() {
-  document.querySelectorAll(".activity-card__image img, .post-media img").forEach((image) => {
+  document.querySelectorAll(".activity-card__image img, .board-list__preview img, .post-media img").forEach((image) => {
     image.addEventListener("error", () => {
       image.classList.add("is-missing");
       image.alt = "";
@@ -640,6 +1033,7 @@ function initMobileMenu() {
 document.addEventListener("DOMContentLoaded", async () => {
   await loadSiteContent();
   renderAllSections();
+  initGlassLogoHero();
   applyImageFallbacks();
   initSmoothScroll();
   initScrollSpy();
