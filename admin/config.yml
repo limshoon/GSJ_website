@@ -1,0 +1,160 @@
+backend:
+  name: git-gateway
+  branch: main
+
+locale: ko
+site_url: https://smitu.kr
+display_url: https://smitu.kr
+logo_url: /assets/images/smitu-logo-full.png
+media_folder: assets/uploads
+public_folder: /assets/uploads
+
+collections:
+  - name: site_content
+    label: 사이트 콘텐츠
+    files:
+      - name: main_content
+        label: 전체 사이트 콘텐츠
+        file: content/site.json
+        format: json
+        fields:
+          - label: 기본 정보
+            name: site
+            widget: object
+            fields:
+              - { label: 사이트 이름, name: name, widget: string }
+              - { label: 사이트 설명, name: description, widget: text }
+              - { label: 사무실 이름, name: officeName, widget: string }
+              - label: 주소
+                name: addressLines
+                widget: list
+                summary: "{{fields.value}}"
+                field: { label: 주소 줄, name: value, widget: string }
+              - { label: 전화번호, name: phone, widget: string, required: false }
+              - { label: 이메일, name: email, widget: string, required: false }
+              - { label: 저작권 문구, name: copyright, widget: string, required: false }
+              - label: SNS 링크
+                name: sns
+                widget: list
+                required: false
+                summary: "{{fields.label}}"
+                fields:
+                  - { label: 이름, name: label, widget: string }
+                  - { label: 주소, name: url, widget: string, required: false }
+
+          - label: 홈 화면
+            name: home
+            widget: object
+            fields:
+              - label: 큰 제목
+                name: titleLines
+                widget: list
+                summary: "{{fields.value}}"
+                field: { label: 제목 줄, name: value, widget: string }
+              - { label: 강조 문구, name: subtitle, widget: string }
+              - { label: 본문, name: copy, widget: text }
+              - label: 보조 단어
+                name: visualWords
+                widget: list
+                required: false
+                summary: "{{fields.value}}"
+                field: { label: 단어, name: value, widget: string }
+
+          - label: 공지사항
+            name: notices
+            widget: list
+            add_to_top: true
+            collapsed: true
+            summary: "{{fields.date}} · {{fields.title}}"
+            fields:
+              - { label: 게시물 ID, name: id, widget: string, required: false, hint: "비워두면 사이트에서 제목과 날짜를 기준으로 자동 처리합니다." }
+              - { label: 날짜, name: date, widget: string, hint: "예: 2026.07.15" }
+              - { label: 제목, name: title, widget: string }
+              - { label: 목록 요약, name: summary, widget: text }
+              - { label: 상세 본문, name: body, widget: text }
+              - { label: 대표 이미지, name: image, widget: image, required: false }
+              - { label: 첨부 버튼 문구, name: attachmentLabel, widget: string, required: false, default: "첨부 자료 보기" }
+              - { label: 첨부 파일 또는 링크, name: attachmentUrl, widget: file, required: false }
+              - { label: 아이콘, name: icon, widget: hidden, default: document, required: false }
+
+          - label: 활동
+            name: activities
+            widget: list
+            add_to_top: true
+            collapsed: true
+            summary: "{{fields.date}} · {{fields.title}}"
+            fields:
+              - { label: 게시물 ID, name: id, widget: string, required: false, hint: "비워두면 사이트에서 제목과 날짜를 기준으로 자동 처리합니다." }
+              - { label: 날짜, name: date, widget: string, hint: "예: 2026.07.15" }
+              - { label: 제목, name: title, widget: string }
+              - { label: 목록 요약, name: summary, widget: text }
+              - { label: 상세 본문, name: body, widget: text }
+              - { label: 대표 이미지/활동 사진, name: image, widget: image, required: false }
+              - { label: 첨부 버튼 문구, name: attachmentLabel, widget: string, required: false, default: "첨부 자료 보기" }
+              - { label: 첨부 파일 또는 링크, name: attachmentUrl, widget: file, required: false }
+              - { label: 아이콘, name: icon, widget: hidden, default: document, required: false }
+
+          - label: 자료실
+            name: resources
+            widget: list
+            add_to_top: true
+            collapsed: true
+            summary: "{{fields.date}} · {{fields.title}}"
+            fields:
+              - { label: 게시물 ID, name: id, widget: string, required: false }
+              - { label: 날짜, name: date, widget: string, hint: "예: 2026.07.15" }
+              - { label: 제목, name: title, widget: string }
+              - { label: 목록 요약, name: summary, widget: text }
+              - { label: 상세 본문, name: body, widget: text }
+              - { label: 대표 이미지, name: image, widget: image, required: false }
+              - { label: 자료 버튼 문구, name: attachmentLabel, widget: string, required: false, default: "자료 보기" }
+              - { label: 자료 파일 또는 링크, name: attachmentUrl, widget: file, required: false }
+              - label: 아이콘
+                name: icon
+                widget: select
+                required: false
+                default: document
+                options:
+                  - { label: 문서, value: document }
+                  - { label: 사람, value: people }
+                  - { label: 협력, value: handshake }
+                  - { label: 보호, value: shield }
+                  - { label: 깃발, value: flag }
+
+          - label: 조합소개
+            name: aboutItems
+            widget: list
+            required: false
+            collapsed: true
+            summary: "{{fields.title}}"
+            fields:
+              - { label: 제목, name: title, widget: string }
+              - { label: 설명, name: description, widget: text }
+              - label: 아이콘
+                name: icon
+                widget: select
+                default: people
+                options:
+                  - { label: 문서, value: document }
+                  - { label: 사람, value: people }
+                  - { label: 협력, value: handshake }
+                  - { label: 보호, value: shield }
+                  - { label: 깃발, value: flag }
+
+          - label: 문의
+            name: contactItems
+            widget: list
+            collapsed: true
+            summary: "{{fields.title}}"
+            fields:
+              - { label: 제목, name: title, widget: string }
+              - { label: 주요 정보, name: main, widget: string }
+              - { label: 보조 정보, name: sub, widget: string, required: false }
+              - label: 아이콘
+                name: icon
+                widget: select
+                default: phone
+                options:
+                  - { label: 전화, value: phone }
+                  - { label: 이메일, value: mail }
+                  - { label: 지도, value: map }
