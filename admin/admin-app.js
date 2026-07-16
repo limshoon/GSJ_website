@@ -1,10 +1,3 @@
-const CONTENT_PATH = "content/site.json";
-const API_VERSION = "2022-11-28";
-const DEFAULT_REPO = {
-  owner: "limshoon",
-  repo: "GSJ_website",
-  branch: "main",
-};
 const POST_COLLECTIONS = ["notices", "activities", "resources"];
 const SAVE_RESET_DELAY = 1600;
 
@@ -45,7 +38,7 @@ const blankItems = {
     icon: "document",
   }),
   aboutItems: () => ({ title: "", description: "", icon: "document" }),
-  contactItems: () => ({ title: "", main: "", sub: "", icon: "document" }),
+  contactItems: () => ({ title: "", main: "", sub: "", icon: "phone" }),
   sns: () => ({ label: "", url: "#" }),
 };
 
@@ -60,141 +53,91 @@ const iconOptions = [
   ["map", "지도"],
 ];
 
+const sectionLabels = {
+  home: "홈",
+  notices: "공지사항",
+  activities: "활동",
+  resources: "자료실",
+  contactItems: "문의",
+  admins: "관리자 승인",
+  site: "사이트 설정",
+  aboutItems: "조합소개",
+};
+
 const state = {
-  config: { ...DEFAULT_REPO },
-  token: "",
   content: null,
-  sha: "",
-  dirty: false,
+  currentUser: null,
+  adminUsers: { users: [], requests: [] },
   connected: false,
+  dirty: false,
+  activeSection: "home",
   highlightedCollection: "",
   saveResetTimer: null,
 };
 
-const connectionForm = document.querySelector("#connection-form");
 const editor = document.querySelector("#editor");
 const saveButton = document.querySelector("#save-button");
+const logoutButton = document.querySelector("#logout-button");
 const statusMessage = document.querySelector("#status-message");
+const adminTitle = document.querySelector("#admin-title");
+const adminUserLine = document.querySelector("#admin-user-line");
 
 function init() {
-  const savedConfig = JSON.parse(localStorage.getItem("gsj-admin-config") || "null");
-  state.config = { ...DEFAULT_REPO, ...(savedConfig || {}) };
-  state.token = sessionStorage.getItem("gsj-admin-token") || "";
-
-  connectionForm.elements.owner.value = state.config.owner;
-  connectionForm.elements.repo.value = state.config.repo;
-  connectionForm.elements.branch.value = state.config.branch;
-  connectionForm.elements.token.value = state.token;
-
-  connectionForm.addEventListener("submit", handleConnect);
+  document.querySelectorAll("[data-admin-section]").forEach((button) => {
+    button.addEventListener("click", () => setActiveSection(button.dataset.adminSection));
+  });
   saveButton.addEventListener("click", handleSave);
+  logoutButton.addEventListener("click", handleLogout);
   editor.addEventListener("click", handleEditorClick);
   editor.addEventListener("input", markDirty);
   editor.addEventListener("input", handleImagePreviewInput);
   editor.addEventListener("change", markDirty);
   editor.addEventListener("change", handleImagePreviewChange);
 
-  loadPublicContent();
+  bootstrap();
 }
 
-async function loadPublicContent() {
+async function bootstrap() {
   try {
-    const response = await fetch(`../${CONTENT_PATH}?v=${Date.now()}`, { cache: "no-store" });
-
-    if (!response.ok) {
-      throw new Error("public content not found");
-    }
-
-    state.content = normalizeContent(await response.json());
-    renderEditor();
-    setStatus("현재 공개된 콘텐츠를 불러왔습니다. 저장하려면 GitHub에 연결하세요.");
-  } catch (error) {
-    editor.innerHTML = `<p class="empty-editor">GitHub에 연결하면 콘텐츠 편집 화면이 열립니다.</p>`;
-  }
-}
-
-async function handleConnect(event) {
-  event.preventDefault();
-
-  state.config = {
-    owner: connectionForm.elements.owner.value.trim(),
-    repo: connectionForm.elements.repo.value.trim(),
-    branch: connectionForm.elements.branch.value.trim(),
-  };
-  state.token = connectionForm.elements.token.value.trim();
-
-  if (!state.config.owner || !state.config.repo || !state.config.branch || !state.token) {
-    setStatus("연결 정보를 모두 입력해주세요.", "error");
-    return;
-  }
-
-  localStorage.setItem("gsj-admin-config", JSON.stringify(state.config));
-  sessionStorage.setItem("gsj-admin-token", state.token);
-
-  setStatus("GitHub에서 콘텐츠를 불러오는 중입니다...");
-
-  try {
-    await loadContentFromGitHub();
+    const session = await apiRequest("/.netlify/functions/admin-session");
+    state.currentUser = session.user;
     state.connected = true;
-    state.dirty = false;
+    adminUserLine.textContent = `${session.user.name || session.user.email} 계정으로 로그인했습니다.`;
+
+    const [contentPayload, usersPayload] = await Promise.all([
+      apiRequest("/.netlify/functions/admin-content"),
+      apiRequest("/.netlify/functions/admin-users"),
+    ]);
+
+    state.content = normalizeContent(contentPayload.content);
+    state.adminUsers = usersPayload;
+    renderEditor();
     setSaveButtonState("idle");
-    renderEditor();
-    setStatus("연결되었습니다. 수정 후 저장하고 게시할 수 있습니다.", "success");
+    setStatus("콘텐츠를 불러왔습니다.", "success");
   } catch (error) {
-    setSaveButtonState("disabled");
-    setStatus(getErrorMessage(error), "error");
+    window.location.href = `/login.html?next=${encodeURIComponent("/admin/")}`;
   }
 }
 
-async function loadContentFromGitHub() {
-  const payload = await githubRequest(`/contents/${CONTENT_PATH}?ref=${encodeURIComponent(state.config.branch)}`);
-  state.sha = payload.sha;
-  state.content = normalizeContent(JSON.parse(base64ToString(payload.content)));
-}
+async function apiRequest(url, options = {}) {
+  const response = await fetch(url, {
+    cache: "no-store",
+    credentials: "same-origin",
+    ...options,
+    headers: {
+      ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...(options.headers || {}),
+    },
+  });
+  const payload = await response.json().catch(() => ({}));
 
-async function handleSave() {
-  if (!state.connected) {
-    setStatus("먼저 GitHub에 연결해주세요.", "error");
-    return;
-  }
-
-  setSaveButtonState("saving");
-  setStatus("이미지와 자료를 업로드하고 변경 사항을 저장하는 중입니다...");
-
-  try {
-    state.content = readContentFromForm();
-    await uploadManagedFiles(state.content);
-
-    const body = JSON.stringify(stripPrivateFields(state.content), null, 2) + "\n";
-    const payload = {
-      message: `Update site content ${new Date().toISOString().slice(0, 10)}`,
-      content: stringToBase64(body),
-      branch: state.config.branch,
-      sha: state.sha,
-    };
-
-    const result = await githubRequest(`/contents/${CONTENT_PATH}`, {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    });
-
-    state.sha = result.content.sha;
-    state.content = normalizeContent(stripPrivateFields(state.content));
-    state.dirty = false;
-    renderEditor();
-    setSaveButtonState("success");
-    setStatus("저장되었습니다. 잠시 후 사이트에 자동으로 반영됩니다.", "success");
-    showToast("변경사항이 저장되었습니다.", "success");
-  } catch (error) {
-    setSaveButtonState("error");
-    setStatus(getErrorMessage(error), "error");
-    showToast("저장 중 오류가 발생했습니다. 다시 시도해 주세요.", "error");
-  }
+  if (!response.ok) throw new Error(payload.error || "요청 처리에 실패했습니다.");
+  return payload;
 }
 
 function renderEditor() {
   if (!state.content) {
-    editor.innerHTML = `<p class="empty-editor">편집할 콘텐츠가 없습니다.</p>`;
+    editor.innerHTML = `<p class="empty-editor">콘텐츠를 불러오는 중입니다.</p>`;
     return;
   }
 
@@ -203,6 +146,7 @@ function renderEditor() {
 
   editor.innerHTML = `
     <form class="editor-form" id="content-form">
+      ${renderAdminUsersSection()}
       ${renderSiteSection(content)}
       ${renderHomeSection(content)}
       ${renderCollectionSection("notices", "공지사항", "방문자가 공지사항 목록에서 클릭해 상세 내용을 열람합니다.", content.notices, postFields("notice"))}
@@ -221,6 +165,65 @@ function renderEditor() {
       ])}
     </form>
   `;
+  applyActiveSection();
+}
+
+function renderAdminUsersSection() {
+  const requests = state.adminUsers.requests || [];
+  const users = state.adminUsers.users || [];
+
+  return `
+    <section class="editor-section" data-editor-section="admins">
+      <div class="section-heading">
+        <div>
+          <h3 class="admin-section-title">관리자 가입 요청</h3>
+          <p>승인된 사람만 관리자 로그인과 게시물 수정이 가능합니다.</p>
+        </div>
+      </div>
+      <div class="admin-request-list">
+        ${
+          requests.length
+            ? requests.map(renderAdminRequest).join("")
+            : `<p class="empty-editor">승인 대기 중인 요청이 없습니다.</p>`
+        }
+      </div>
+      <div class="section-heading section-heading--sub">
+        <div>
+          <h3 class="admin-section-title">승인된 관리자</h3>
+          <p>관리자 계정만 표시됩니다. 일반 회원 기능은 없습니다.</p>
+        </div>
+      </div>
+      <div class="admin-user-list">
+        ${users.map(renderApprovedAdmin).join("") || `<p class="empty-editor">승인된 관리자가 없습니다.</p>`}
+      </div>
+    </section>
+  `;
+}
+
+function renderAdminRequest(request) {
+  return `
+    <article class="admin-request-card">
+      <div>
+        <strong>${escapeHtml(request.name || request.email)}</strong>
+        <span>${escapeHtml(request.email)}</span>
+        <small>${formatDateTime(request.requestedAt)} 요청</small>
+      </div>
+      <div class="item-actions">
+        <button class="secondary-button" type="button" data-admin-action="approve" data-request-id="${escapeHtml(request.id)}">승인</button>
+        <button class="danger-button" type="button" data-admin-action="reject" data-request-id="${escapeHtml(request.id)}">거절</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderApprovedAdmin(user) {
+  return `
+    <article class="admin-user-card">
+      <strong>${escapeHtml(user.name || user.email)}</strong>
+      <span>${escapeHtml(user.email)}</span>
+      <small>${escapeHtml(user.role || "admin")}${user.source === "env" ? " · 초기 관리자" : ""}</small>
+    </article>
+  `;
 }
 
 function postFields(kind) {
@@ -233,10 +236,7 @@ function postFields(kind) {
     { name: "image", label: kind === "activity" ? "대표 이미지/활동 사진" : "대표 이미지/포스터", type: "image" },
   ];
 
-  if (kind === "resource") {
-    fields.push({ name: "icon", label: "아이콘", type: "select" });
-  }
-
+  if (kind === "resource") fields.push({ name: "icon", label: "아이콘", type: "select" });
   if (kind !== "activity") {
     fields.push(
       { name: "attachmentLabel", label: kind === "resource" ? "자료 버튼 문구" : "첨부 버튼 문구" },
@@ -251,7 +251,7 @@ function renderSiteSection(content) {
   const site = content.site;
 
   return `
-    <section class="editor-section">
+    <section class="editor-section" data-editor-section="site">
       <div class="section-heading">
         <div>
           <h3 class="admin-section-title">기본 정보</h3>
@@ -279,7 +279,7 @@ function renderHomeSection(content) {
   const home = content.home;
 
   return `
-    <section class="editor-section">
+    <section class="editor-section" data-editor-section="home">
       <div class="section-heading">
         <div>
           <h3 class="admin-section-title">홈 화면</h3>
@@ -297,8 +297,10 @@ function renderHomeSection(content) {
 }
 
 function renderCollectionSection(key, title, description, items, fields, nested = false) {
+  const sectionAttribute = nested ? "" : ` data-editor-section="${key}"`;
+
   return `
-    <section class="${nested ? "nested-section" : "editor-section"}" data-wrapper="${key}">
+    <section class="${nested ? "nested-section" : "editor-section"}" data-wrapper="${key}"${sectionAttribute}>
       <div class="section-heading">
         <div>
           <h3 class="admin-section-title">${escapeHtml(title)}</h3>
@@ -404,72 +406,49 @@ function renderImagePreview(value) {
   `;
 }
 
-function handleImagePreviewInput(event) {
-  const input = event.target.closest("[data-image-source='true']");
-
-  if (!input) return;
-
-  updateImagePreview(input);
-}
-
-function handleImagePreviewChange(event) {
-  const uploadInput = event.target.closest("[data-upload-kind='image']");
-  const imageInput = event.target.closest("[data-image-source='true']");
-
-  if (uploadInput) {
-    updateImagePreview(uploadInput);
+async function handleSave() {
+  if (!state.connected) {
+    window.location.href = "/login.html";
     return;
   }
 
-  if (imageInput) updateImagePreview(imageInput);
+  setSaveButtonState("saving");
+  setStatus("변경 사항을 저장하는 중입니다...");
+
+  try {
+    state.content = readContentFromForm();
+    await prepareManagedUploads(state.content);
+    const payload = await apiRequest("/.netlify/functions/admin-content", {
+      method: "PUT",
+      body: JSON.stringify({ content: state.content }),
+    });
+
+    state.content = normalizeContent(payload.content);
+    state.dirty = false;
+    renderEditor();
+    setSaveButtonState("success");
+    setStatus("저장되었습니다. 잠시 후 사이트에 자동 반영됩니다.", "success");
+    showToast("변경사항이 저장되었습니다.", "success");
+  } catch (error) {
+    setSaveButtonState("error");
+    setStatus(error.message, "error");
+    showToast("저장 중 오류가 발생했습니다.", "error");
+  }
 }
 
-function updateImagePreview(control) {
-  const field = control.closest(".wide-field");
-  const preview = field?.querySelector("[data-image-preview]");
+async function handleLogout() {
+  await fetch("/.netlify/functions/admin-logout", { method: "POST", credentials: "same-origin" });
+  window.location.href = "/login.html";
+}
 
-  if (!preview) return;
-
-  if (control.matches("[data-upload-kind='image']") && control.files[0]) {
-    setImagePreview(preview, URL.createObjectURL(control.files[0]));
+async function handleEditorClick(event) {
+  const adminButton = event.target.closest("[data-admin-action]");
+  if (adminButton) {
+    await handleAdminRequestAction(adminButton);
     return;
   }
 
-  const source = field.querySelector("[data-image-source='true']");
-  setImagePreview(preview, source?.value.trim() || "");
-}
-
-function setImagePreview(preview, src) {
-  const image = preview.querySelector("img");
-  const placeholder = preview.querySelector("span");
-
-  if (preview.dataset.objectUrl) {
-    URL.revokeObjectURL(preview.dataset.objectUrl);
-    delete preview.dataset.objectUrl;
-  }
-
-  if (src && src.startsWith("blob:")) {
-    preview.dataset.objectUrl = src;
-  }
-
-  if (!src) {
-    image.hidden = true;
-    image.removeAttribute("src");
-    placeholder.hidden = false;
-    preview.classList.remove("has-image");
-    return;
-  }
-
-  image.src = src;
-  image.alt = "선택한 이미지 미리보기";
-  image.hidden = false;
-  placeholder.hidden = true;
-  preview.classList.add("has-image");
-}
-
-function handleEditorClick(event) {
   const button = event.target.closest("[data-action]");
-
   if (!button || !state.content) return;
 
   if (document.querySelector("#content-form")) {
@@ -494,8 +473,23 @@ function handleEditorClick(event) {
   state.dirty = true;
   renderEditor();
 
-  if (action === "add") {
-    focusNewItem(collection);
+  if (action === "add") focusNewItem(collection);
+}
+
+async function handleAdminRequestAction(button) {
+  button.disabled = true;
+  const action = button.dataset.adminAction;
+  const id = button.dataset.requestId;
+
+  try {
+    state.adminUsers = await apiRequest("/.netlify/functions/admin-users", {
+      method: "POST",
+      body: JSON.stringify({ action, id }),
+    });
+    renderEditor();
+    setStatus(action === "approve" ? "관리자 요청을 승인했습니다." : "관리자 요청을 거절했습니다.", "success");
+  } catch (error) {
+    setStatus(error.message, "error");
   }
 }
 
@@ -513,29 +507,32 @@ function readContentFromForm(options = {}) {
   const form = document.querySelector("#content-form");
   const { sortPosts = true } = options;
 
-  return normalizeContent({
-    site: {
-      name: getSectionValue(form, "site", "name"),
-      description: getSectionValue(form, "site", "description"),
-      officeName: getSectionValue(form, "site", "officeName"),
-      addressLines: toLines(getSectionValue(form, "site", "addressLines")),
-      phone: getSectionValue(form, "site", "phone"),
-      email: getSectionValue(form, "site", "email"),
-      copyright: getSectionValue(form, "site", "copyright"),
-      sns: readCollection("sns", ["label", "url"]),
+  return normalizeContent(
+    {
+      site: {
+        name: getSectionValue(form, "site", "name"),
+        description: getSectionValue(form, "site", "description"),
+        officeName: getSectionValue(form, "site", "officeName"),
+        addressLines: toLines(getSectionValue(form, "site", "addressLines")),
+        phone: getSectionValue(form, "site", "phone"),
+        email: getSectionValue(form, "site", "email"),
+        copyright: getSectionValue(form, "site", "copyright"),
+        sns: readCollection("sns", ["label", "url"]),
+      },
+      home: {
+        titleLines: toLines(getSectionValue(form, "home", "titleLines")),
+        subtitle: getSectionValue(form, "home", "subtitle"),
+        copy: getSectionValue(form, "home", "copy"),
+        visualWords: toLines(getSectionValue(form, "home", "visualWords")),
+      },
+      notices: readCollection("notices", postFields("notice")),
+      activities: readCollection("activities", postFields("activity")),
+      resources: readCollection("resources", postFields("resource")),
+      aboutItems: readCollection("aboutItems", ["title", "description", "icon"]),
+      contactItems: readCollection("contactItems", ["title", "main", "sub", "icon"]),
     },
-    home: {
-      titleLines: toLines(getSectionValue(form, "home", "titleLines")),
-      subtitle: getSectionValue(form, "home", "subtitle"),
-      copy: getSectionValue(form, "home", "copy"),
-      visualWords: toLines(getSectionValue(form, "home", "visualWords")),
-    },
-    notices: readCollection("notices", postFields("notice")),
-    activities: readCollection("activities", postFields("activity")),
-    resources: readCollection("resources", postFields("resource")),
-    aboutItems: readCollection("aboutItems", ["title", "description", "icon"]),
-    contactItems: readCollection("contactItems", ["title", "main", "sub", "icon"]),
-  }, { sortPosts });
+    { sortPosts }
+  );
 }
 
 function getSectionValue(form, section, field) {
@@ -547,15 +544,13 @@ function readCollection(collection, fields) {
 
   return [...document.querySelectorAll(`.admin-item[data-collection="${collection}"]`)].map((item, index) => {
     const nextItem = {};
-    const originalItem = state.content?.[collection]?.[index] || {};
+    const originalItem = collection === "sns" ? state.content?.site?.sns?.[index] || {} : state.content?.[collection]?.[index] || {};
 
     normalizedFields.forEach((field) => {
       nextItem[field.name] = item.querySelector(`[data-field="${field.name}"]`)?.value.trim() || "";
     });
 
-    if ("id" in nextItem && !nextItem.id) {
-      nextItem.id = createPostId(collection, index);
-    }
+    if ("id" in nextItem && !nextItem.id) nextItem.id = createPostId(collection, index);
 
     item.querySelectorAll("[data-upload-field]").forEach((input) => {
       const file = input.files[0];
@@ -577,108 +572,47 @@ function readCollection(collection, fields) {
   });
 }
 
-function toLines(value) {
-  return String(value || "")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
-}
-
-async function uploadManagedFiles(content) {
+async function prepareManagedUploads(content) {
   for (const collection of ["notices", "activities", "resources"]) {
     for (const item of content[collection] || []) {
       if (!item._uploads) continue;
 
-      for (const [field, upload] of Object.entries(item._uploads)) {
-        const path = getUploadPath(upload.kind, upload.file.name);
-        const fileContent = await fileToBase64(upload.file);
-
-        await githubRequest(`/contents/${path}`, {
-          method: "PUT",
-          body: JSON.stringify({
-            message: `Upload ${path}`,
-            content: fileContent,
-            branch: state.config.branch,
-          }),
-        });
-
-        item[field] = path;
+      for (const upload of Object.values(item._uploads)) {
+        upload.name = upload.file.name;
+        upload.content = await fileToBase64(upload.file);
+        delete upload.file;
       }
-
-      delete item._uploads;
     }
   }
 }
 
-function getUploadPath(kind, fileName) {
-  const directory = kind === "image" ? "assets/images/uploads" : "assets/files/uploads";
-  return `${directory}/${makeSafeFileName(fileName)}`;
+function setActiveSection(section) {
+  if (!sectionLabels[section]) return;
+  state.activeSection = section;
+  applyActiveSection();
 }
 
-function stripPrivateFields(content) {
-  const cloned = JSON.parse(JSON.stringify(content));
-
-  ["notices", "activities", "resources"].forEach((collection) => {
-    cloned[collection] = (cloned[collection] || []).map(({ _uploads, ...item }) => item);
+function applyActiveSection() {
+  adminTitle.textContent = sectionLabels[state.activeSection] || "관리자";
+  document.querySelectorAll("[data-admin-section]").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.adminSection === state.activeSection);
   });
-
-  return cloned;
-}
-
-async function githubRequest(path, options = {}) {
-  const response = await fetch(`https://api.github.com/repos/${state.config.owner}/${state.config.repo}${path}`, {
-    ...options,
-    headers: {
-      Accept: "application/vnd.github+json",
-      Authorization: `Bearer ${state.token}`,
-      "Content-Type": "application/json",
-      "X-GitHub-Api-Version": API_VERSION,
-      ...(options.headers || {}),
-    },
+  document.querySelectorAll("[data-editor-section]").forEach((section) => {
+    section.hidden = section.dataset.editorSection !== state.activeSection;
   });
-
-  if (!response.ok) {
-    let detail = "";
-
-    try {
-      const payload = await response.json();
-      detail = payload.message ? ` ${payload.message}` : "";
-    } catch (error) {
-      detail = "";
-    }
-
-    throw new Error(`GitHub 요청에 실패했습니다.${detail}`);
-  }
-
-  return response.json();
 }
 
 function normalizeContent(content, options = {}) {
   const { sortPosts = true } = options;
   const base = {
-    site: {
-      name: "",
-      description: "",
-      officeName: "",
-      addressLines: [],
-      phone: "",
-      email: "",
-      copyright: "",
-      sns: [],
-    },
-    home: {
-      titleLines: [],
-      subtitle: "",
-      copy: "",
-      visualWords: [],
-    },
+    site: { name: "", description: "", officeName: "", addressLines: [], phone: "", email: "", copyright: "", sns: [] },
+    home: { titleLines: [], subtitle: "", copy: "", visualWords: [] },
     notices: [],
     activities: [],
     resources: [],
     aboutItems: [],
     contactItems: [],
   };
-
   const next = {
     ...base,
     ...(content || {}),
@@ -721,19 +655,12 @@ function normalizePost(item, collection, index) {
     attachmentLabel: item.attachmentLabel || (collection === "resources" ? "자료 보기" : "첨부 자료 보기"),
     attachmentUrl: item.attachmentUrl || item.link || "",
     icon: item.icon || "document",
+    _uploads: item._uploads,
   };
 }
 
 function sortPostsByLatest(posts) {
-  return [...posts].sort((a, b) => {
-    const primary = getPostTime(b) - getPostTime(a);
-    if (primary !== 0) return primary;
-
-    const secondary = getDateTime(b.updatedAt || b.updated_at) - getDateTime(a.updatedAt || a.updated_at);
-    if (secondary !== 0) return secondary;
-
-    return String(b.id || "").localeCompare(String(a.id || ""));
-  });
+  return [...posts].sort((a, b) => getPostTime(b) - getPostTime(a) || String(b.id || "").localeCompare(String(a.id || "")));
 }
 
 function getPostTime(post) {
@@ -742,15 +669,10 @@ function getPostTime(post) {
 
 function getDateTime(value) {
   if (!value) return 0;
-
   const text = String(value).trim();
   const normalized = text.replace(/[./]/g, "-");
   const dateOnly = normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-
-  if (dateOnly) {
-    return new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3])).getTime();
-  }
-
+  if (dateOnly) return new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3])).getTime();
   const parsed = Date.parse(text);
   return Number.isNaN(parsed) ? 0 : parsed;
 }
@@ -762,8 +684,80 @@ function getIdTime(id) {
 
 function hasPostChanged(previous, next) {
   const fields = ["id", "date", "title", "summary", "body", "image", "attachmentLabel", "attachmentUrl", "icon"];
-
   return Boolean(next._uploads) || fields.some((field) => String(previous?.[field] || "") !== String(next?.[field] || ""));
+}
+
+function handleImagePreviewInput(event) {
+  const input = event.target.closest("[data-image-source='true']");
+  if (input) updateImagePreview(input);
+}
+
+function handleImagePreviewChange(event) {
+  const uploadInput = event.target.closest("[data-upload-kind='image']");
+  const imageInput = event.target.closest("[data-image-source='true']");
+
+  if (uploadInput) {
+    updateImagePreview(uploadInput);
+    return;
+  }
+  if (imageInput) updateImagePreview(imageInput);
+}
+
+function updateImagePreview(control) {
+  const field = control.closest(".wide-field");
+  const preview = field?.querySelector("[data-image-preview]");
+  if (!preview) return;
+
+  if (control.matches("[data-upload-kind='image']") && control.files[0]) {
+    setImagePreview(preview, URL.createObjectURL(control.files[0]));
+    return;
+  }
+
+  const source = field.querySelector("[data-image-source='true']");
+  setImagePreview(preview, source?.value.trim() || "");
+}
+
+function setImagePreview(preview, src) {
+  const image = preview.querySelector("img");
+  const placeholder = preview.querySelector("span");
+
+  if (preview.dataset.objectUrl) {
+    URL.revokeObjectURL(preview.dataset.objectUrl);
+    delete preview.dataset.objectUrl;
+  }
+  if (src && src.startsWith("blob:")) preview.dataset.objectUrl = src;
+
+  if (!src) {
+    image.hidden = true;
+    image.removeAttribute("src");
+    placeholder.hidden = false;
+    preview.classList.remove("has-image");
+    return;
+  }
+
+  image.src = src;
+  image.alt = "선택한 이미지 미리보기";
+  image.hidden = false;
+  placeholder.hidden = true;
+  preview.classList.add("has-image");
+}
+
+function toLines(value) {
+  return String(value || "").split("\n").map((line) => line.trim()).filter(Boolean);
+}
+
+async function fileToBase64(file) {
+  const buffer = await file.arrayBuffer();
+  return bytesToBase64(new Uint8Array(buffer));
+}
+
+function bytesToBase64(bytes) {
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
+  }
+  return btoa(binary);
 }
 
 function nowIso() {
@@ -772,10 +766,7 @@ function nowIso() {
 
 function todayText() {
   const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-  return `${year}.${month}.${day}`;
+  return `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, "0")}.${String(today.getDate()).padStart(2, "0")}`;
 }
 
 function createPostId(prefix = "post", index = "") {
@@ -783,43 +774,11 @@ function createPostId(prefix = "post", index = "") {
   return `${prefix}-${suffix}`;
 }
 
-function makeSafeFileName(name) {
-  const now = Date.now();
-  const extension = name.includes(".") ? name.slice(name.lastIndexOf(".")).toLowerCase().replace(/[^a-z0-9.]/g, "") : "";
-  const baseName = name
-    .replace(/\.[^.]+$/, "")
-    .normalize("NFKD")
-    .replace(/[^a-zA-Z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .toLowerCase();
-
-  return `${now}-${baseName || "file"}${extension || ".dat"}`;
-}
-
-async function fileToBase64(file) {
-  const buffer = await file.arrayBuffer();
-  return bytesToBase64(new Uint8Array(buffer));
-}
-
-function stringToBase64(value) {
-  return bytesToBase64(new TextEncoder().encode(value));
-}
-
-function base64ToString(value) {
-  const binary = atob(String(value || "").replace(/\s/g, ""));
-  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-  return new TextDecoder().decode(bytes);
-}
-
-function bytesToBase64(bytes) {
-  let binary = "";
-  const chunkSize = 0x8000;
-
-  for (let index = 0; index < bytes.length; index += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
-  }
-
-  return btoa(binary);
+function formatDateTime(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("ko-KR", { dateStyle: "medium", timeStyle: "short" });
 }
 
 function markDirty() {
@@ -830,12 +789,6 @@ function setSaveButtonState(status = "idle") {
   window.clearTimeout(state.saveResetTimer);
   saveButton.classList.remove("is-saving", "is-success", "is-error");
   saveButton.setAttribute("aria-busy", "false");
-
-  if (status === "disabled") {
-    saveButton.disabled = true;
-    saveButton.textContent = "저장하고 게시";
-    return;
-  }
 
   if (status === "saving") {
     saveButton.disabled = true;
@@ -866,7 +819,6 @@ function setSaveButtonState(status = "idle") {
 
 function focusNewItem(collection) {
   const firstItem = document.querySelector(`.admin-item[data-collection="${collection}"]`);
-
   if (!firstItem) return;
 
   firstItem.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -874,15 +826,12 @@ function focusNewItem(collection) {
 
   window.setTimeout(() => {
     firstItem.classList.remove("is-highlighted");
-    if (state.highlightedCollection === collection) {
-      state.highlightedCollection = "";
-    }
+    if (state.highlightedCollection === collection) state.highlightedCollection = "";
   }, 1200);
 }
 
 function showToast(message, type = "success") {
   let toast = document.querySelector("#admin-toast");
-
   if (!toast) {
     toast = document.createElement("div");
     toast.id = "admin-toast";
@@ -896,19 +845,13 @@ function showToast(message, type = "success") {
   toast.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
 
   window.clearTimeout(showToast.timer);
-  showToast.timer = window.setTimeout(() => {
-    toast.classList.remove("is-visible");
-  }, 2600);
+  showToast.timer = window.setTimeout(() => toast.classList.remove("is-visible"), 2600);
 }
 
 function setStatus(message, type = "") {
   statusMessage.textContent = message;
   statusMessage.classList.toggle("is-error", type === "error");
   statusMessage.classList.toggle("is-success", type === "success");
-}
-
-function getErrorMessage(error) {
-  return error.message || "처리 중 문제가 발생했습니다.";
 }
 
 function escapeHtml(value) {
