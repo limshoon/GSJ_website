@@ -117,6 +117,7 @@ jobs:
           DB_NAME: ${{ secrets.CAFE24_DB_NAME || secrets.CAFE24_FTP_USERNAME }}
           DB_USERNAME: ${{ secrets.CAFE24_DB_USERNAME || secrets.CAFE24_FTP_USERNAME }}
           DB_PASSWORD: ${{ secrets.CAFE24_DB_PASSWORD || secrets.CAFE24_FTP_PASSWORD }}
+          ADMIN_PASSWORD: ${{ secrets.CAFE24_ADMIN_PASSWORD || 'admin1234' }}
         run: |
           set -euo pipefail
 
@@ -132,6 +133,7 @@ jobs:
           DB_NAME_ESC="$(php_escape "$DB_NAME")"
           DB_USERNAME_ESC="$(php_escape "$DB_USERNAME")"
           DB_PASSWORD_ESC="$(php_escape "$DB_PASSWORD")"
+          ADMIN_PASSWORD_ESC="$(php_escape "$ADMIN_PASSWORD")"
 
           cat > "$CONFIG_DIR/config.php" <<PHP
           <?php
@@ -159,7 +161,7 @@ jobs:
 
               'bootstrap_admin' => [
                   'email' => 'admin@example.com',
-                  'password' => 'CHANGE_THIS_PASSWORD',
+                  'password' => '${ADMIN_PASSWORD_ESC}',
                   'name' => '최고관리자',
               ],
           ];
