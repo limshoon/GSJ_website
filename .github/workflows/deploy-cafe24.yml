@@ -128,5 +128,5 @@ jobs:
           REMOTE_DIR="${SSH_DIR:-/home/hosting_users/${SSH_USERNAME}/www}"
           printf -v REMOTE_DIR_Q '%q' "$REMOTE_DIR"
 
-          REMOTE_COMMAND="cd ${REMOTE_DIR_Q} && if command -v php >/dev/null 2>&1; then php install/run_member_migration.php; elif [ -x /usr/local/php/bin/php ]; then /usr/local/php/bin/php install/run_member_migration.php; else echo 'PHP CLI not found on server.' >&2; exit 1; fi"
+          REMOTE_COMMAND="cd ${REMOTE_DIR_Q} && if command -v php >/dev/null 2>&1; then php -d display_errors=1 install/run_member_migration.php; elif [ -x /usr/local/php/bin/php ]; then /usr/local/php/bin/php -d display_errors=1 install/run_member_migration.php; else echo 'PHP CLI not found on server.' >&2; exit 1; fi"
           SSHPASS="$SSH_PASSWORD" sshpass -e ssh "${SSH_OPTIONS[@]}" "$SSH_USERNAME@$SSH_HOST" "$REMOTE_COMMAND"
