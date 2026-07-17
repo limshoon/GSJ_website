@@ -37,7 +37,14 @@ jobs:
           if [ -n "${FTP_DIR:-}" ]; then
             REMOTE_CANDIDATES+=("$FTP_DIR")
           fi
-          REMOTE_CANDIDATES+=("." "./" "www" "html" "public_html" "htdocs" "web" "smitu.kr")
+          REMOTE_CANDIDATES+=(
+            "." "./"
+            "www" "html" "public_html" "htdocs" "web"
+            "${FTP_USERNAME}" "${FTP_USERNAME}/www" "/${FTP_USERNAME}/www"
+            "/home/${FTP_USERNAME}/www"
+            "/home/hosting_users/${FTP_USERNAME}/www"
+            "smitu.kr"
+          )
 
           REMOTE_DIR=""
           TEST_DIR=".codex-deploy-check-${GITHUB_RUN_ID}"
@@ -62,7 +69,7 @@ jobs:
 
           if [ -z "$REMOTE_DIR" ]; then
             echo "::error::Could not find a writable FTP directory. Remote root listing follows."
-            lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_HOST" <<EOF
+            timeout 20s lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_HOST" <<EOF || true
           set ftp:ssl-allow no
           set ftp:passive-mode on
           pwd
