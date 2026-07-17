@@ -53,6 +53,37 @@ CREATE TABLE IF NOT EXISTS settings (
   PRIMARY KEY (setting_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS posters (
+  id VARCHAR(120) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  summary TEXT NULL,
+  content MEDIUMTEXT NULL,
+  body MEDIUMTEXT NULL,
+  thumbnail VARCHAR(255) NOT NULL DEFAULT '',
+  image VARCHAR(255) NOT NULL DEFAULT '',
+  attachment_label VARCHAR(120) NOT NULL DEFAULT '자세히 보기',
+  attachment_url VARCHAR(255) NOT NULL DEFAULT '',
+  attachment_file VARCHAR(255) NOT NULL DEFAULT '',
+  icon VARCHAR(60) NOT NULL DEFAULT 'document',
+  category VARCHAR(80) NOT NULL DEFAULT '포스터',
+  status ENUM('published', 'private', 'draft') NOT NULL DEFAULT 'published',
+  author VARCHAR(120) NOT NULL DEFAULT '',
+  views INT UNSIGNED NOT NULL DEFAULT 0,
+  is_notice TINYINT(1) NOT NULL DEFAULT 0,
+  is_pinned TINYINT(1) NOT NULL DEFAULT 0,
+  pinned TINYINT(1) NOT NULL DEFAULT 0,
+  important TINYINT(1) NOT NULL DEFAULT 0,
+  sort_order INT NOT NULL DEFAULT 0,
+  post_date DATE NULL,
+  published_at DATETIME NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY posters_status_date_idx (status, post_date),
+  KEY posters_category_idx (category),
+  FULLTEXT KEY posters_search_idx (title, summary, body)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS notices (
   id VARCHAR(120) NOT NULL,
   title VARCHAR(255) NOT NULL,

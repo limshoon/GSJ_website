@@ -17,10 +17,10 @@ $csrfToken = csrf_token();
     <link rel="icon" href="../assets/images/smitu-thumbnail.png" />
     <link rel="apple-touch-icon" href="../assets/images/smitu-thumbnail.png" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
-    <link rel="stylesheet" href="admin.css?v=20260717-memberauth" />
+    <link rel="stylesheet" href="admin.css?v=20260717-posteradmin" />
     <meta name="csrf-token" content="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>" />
     <script src="https://cdn.jsdelivr.net/npm/tinymce@6/tinymce.min.js" referrerpolicy="origin" defer></script>
-    <script src="admin-app.js?v=20260717-memberauth" defer></script>
+    <script src="admin-app.js?v=20260717-posteradmin" defer></script>
   </head>
   <body class="admin-body">
     <aside class="admin-app-sidebar" aria-label="관리자 메뉴">
@@ -30,6 +30,7 @@ $csrfToken = csrf_token();
 
       <nav class="admin-app-nav" aria-label="콘텐츠 관리">
         <button class="admin-app-nav__link is-active" type="button" data-admin-section="dashboard">대시보드</button>
+        <button class="admin-app-nav__link" type="button" data-admin-section="posters">포스터 관리</button>
         <button class="admin-app-nav__link" type="button" data-admin-section="notices">공지사항 관리</button>
         <button class="admin-app-nav__link" type="button" data-admin-section="activities">활동 관리</button>
         <button class="admin-app-nav__link" type="button" data-admin-section="resources">자료실 관리</button>

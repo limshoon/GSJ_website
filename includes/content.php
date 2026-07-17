@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/db.php';
 
-const POST_TABLES = ['notices', 'activities', 'resources'];
+const POST_TABLES = ['posters', 'notices', 'activities', 'resources'];
 
 function default_content(): array
 {
@@ -31,6 +31,7 @@ function default_content(): array
         ],
         'aboutItems' => [],
         'contactItems' => [],
+        'posters' => [],
         'notices' => [],
         'activities' => [],
         'resources' => [],
@@ -46,6 +47,7 @@ function load_site_content(bool $includePrivate = false): array
         'home' => load_setting('home', $defaults['home']),
         'aboutItems' => load_setting('aboutItems', $defaults['aboutItems']),
         'contactItems' => load_contacts($defaults['contactItems']),
+        'posters' => load_posts('posters', $includePrivate),
         'notices' => load_posts('notices', $includePrivate),
         'activities' => load_posts('activities', $includePrivate),
         'resources' => load_posts('resources', $includePrivate),
@@ -321,7 +323,7 @@ function normalize_content_payload(array $content): array
     $next['site'] = array_merge($defaults['site'], is_array($content['site'] ?? null) ? $content['site'] : []);
     $next['home'] = array_merge($defaults['home'], is_array($content['home'] ?? null) ? $content['home'] : []);
 
-    foreach (['aboutItems', 'contactItems', 'notices', 'activities', 'resources'] as $key) {
+    foreach (['aboutItems', 'contactItems', 'posters', 'notices', 'activities', 'resources'] as $key) {
         if (!isset($next[$key]) || !is_array($next[$key])) {
             $next[$key] = [];
         }
@@ -333,6 +335,7 @@ function normalize_content_payload(array $content): array
 function normalize_post(array $post, string $table, int $index): array
 {
     $defaults = [
+        'posters' => ['category' => '포스터', 'attachmentLabel' => '자세히 보기'],
         'notices' => ['category' => '공지', 'attachmentLabel' => '첨부 자료 보기'],
         'activities' => ['category' => '활동', 'attachmentLabel' => '첨부 자료 보기'],
         'resources' => ['category' => '자료', 'attachmentLabel' => '자료 보기'],

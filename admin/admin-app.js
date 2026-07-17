@@ -1,8 +1,19 @@
-const POST_COLLECTIONS = ["notices", "activities", "resources"];
+const POST_COLLECTIONS = ["posters", "notices", "activities", "resources"];
 const PAGE_SIZE = 20;
 const SAVE_RESET_DELAY = 1600;
 
 const collectionMeta = {
+  posters: {
+    label: "포스터",
+    title: "포스터 관리",
+    singular: "포스터",
+    description: "메인 화면과 포스터 탭에 노출되는 카드형 포스터를 관리합니다.",
+    dateLabel: "게시일",
+    newLabel: "새 포스터 작성",
+    defaultCategory: "포스터",
+    defaultAttachmentLabel: "자세히 보기",
+    categoryOptions: ["포스터", "가입 안내", "권익 보호", "행사", "정책", "교육", "설문"],
+  },
   notices: {
     label: "공지사항",
     title: "공지사항 관리",
@@ -11,6 +22,7 @@ const collectionMeta = {
     dateLabel: "게시일",
     newLabel: "새 공지사항 작성",
     defaultCategory: "공지",
+    defaultAttachmentLabel: "첨부 자료 보기",
     categoryOptions: ["공지", "일반", "행사", "교섭", "중요"],
   },
   activities: {
@@ -21,6 +33,7 @@ const collectionMeta = {
     dateLabel: "활동일",
     newLabel: "새 활동 작성",
     defaultCategory: "활동",
+    defaultAttachmentLabel: "첨부 자료 보기",
     categoryOptions: ["활동", "교섭", "캠페인", "교육", "행사"],
   },
   resources: {
@@ -31,6 +44,7 @@ const collectionMeta = {
     dateLabel: "게시일",
     newLabel: "새 자료 작성",
     defaultCategory: "자료",
+    defaultAttachmentLabel: "자료 보기",
     categoryOptions: ["자료", "정책", "연구", "교육", "조합"],
   },
 };
@@ -54,6 +68,7 @@ const iconOptions = [
 
 const sectionLabels = {
   dashboard: "대시보드",
+  posters: "포스터 관리",
   notices: "공지사항 관리",
   activities: "활동 관리",
   resources: "자료실 관리",
@@ -68,6 +83,7 @@ const sectionLabels = {
 };
 
 const blankItems = {
+  posters: () => createBlankPost("posters"),
   notices: () => createBlankPost("notices"),
   activities: () => createBlankPost("activities"),
   resources: () => createBlankPost("resources"),
@@ -281,7 +297,7 @@ function renderDashboard() {
         <div class="admin-table-header">
           <div>
             <h2>최근 게시물</h2>
-            <p>공지사항, 활동, 자료실의 최근 변경 항목입니다.</p>
+            <p>포스터, 공지사항, 활동, 자료실의 최근 변경 항목입니다.</p>
           </div>
         </div>
         <div class="admin-recent-list">
@@ -434,6 +450,21 @@ function renderPostEditor() {
   const { collection, isNew } = state.editing;
   const meta = collectionMeta[collection];
   const post = state.editing.draft;
+  const imageLabel = collection === "posters"
+    ? "포스터 이미지"
+    : collection === "activities"
+      ? "대표 이미지/활동 사진"
+      : "대표 이미지";
+  const attachmentLabelText = collection === "resources"
+    ? "자료 버튼 문구"
+    : collection === "posters"
+      ? "연결 버튼 문구"
+      : "첨부 버튼 문구";
+  const attachmentUrlText = collection === "resources"
+    ? "자료 파일 또는 링크"
+    : collection === "posters"
+      ? "클릭 시 연결할 링크 또는 파일"
+      : "첨부 파일 또는 링크";
 
   return `
     <section class="admin-edit-screen">
@@ -455,9 +486,9 @@ function renderPostEditor() {
             ${collection === "notices" ? renderField({ name: "important", label: "중요 공지", type: "checkbox" }, post) : ""}
             ${renderField({ name: "summary", label: "요약", type: "textarea" }, post)}
             ${renderField({ name: "body", label: "본문", type: "textarea" }, post)}
-            ${renderField({ name: "image", label: collection === "activities" ? "대표 이미지/활동 사진" : "대표 이미지", type: "image" }, post)}
-            ${collection !== "activities" ? renderField({ name: "attachmentLabel", label: collection === "resources" ? "자료 버튼 문구" : "첨부 버튼 문구" }, post) : ""}
-            ${collection !== "activities" ? renderField({ name: "attachmentUrl", label: collection === "resources" ? "자료 파일 또는 링크" : "첨부 파일 또는 링크", type: "file" }, post) : ""}
+            ${renderField({ name: "image", label: imageLabel, type: "image" }, post)}
+            ${collection !== "activities" ? renderField({ name: "attachmentLabel", label: attachmentLabelText }, post) : ""}
+            ${collection !== "activities" ? renderField({ name: "attachmentUrl", label: attachmentUrlText, type: "file" }, post) : ""}
             ${collection === "resources" ? renderField({ name: "icon", label: "아이콘", type: "select", options: iconOptions }, post) : ""}
           </div>
         </div>
@@ -1387,7 +1418,7 @@ function readPostForm(form, collection) {
     category: getFieldValue(form, "category") || collectionMeta[collection].defaultCategory,
     status: getFieldValue(form, "status") || "published",
     views: Number(original.views || 0),
-    attachmentLabel: getFieldValue(form, "attachmentLabel") || original.attachmentLabel || (collection === "resources" ? "자료 보기" : "첨부 자료 보기"),
+    attachmentLabel: getFieldValue(form, "attachmentLabel") || original.attachmentLabel || collectionMeta[collection].defaultAttachmentLabel || "첨부 자료 보기",
     attachmentUrl: getFieldValue(form, "attachmentUrl") || "",
     icon: getFieldValue(form, "icon") || original.icon || "document",
     pinned: getCheckboxValue(form, "pinned"),
@@ -1516,7 +1547,7 @@ function applyRouteFromHash(shouldRender = true) {
     return;
   }
 
-  const newPostMatch = route.match(/^(notices|activities|resources)-new$/);
+  const newPostMatch = route.match(/^(posters|notices|activities|resources)-new$/);
   if (newPostMatch) {
     const collection = newPostMatch[1];
     state.activeSection = collection;
@@ -1530,7 +1561,7 @@ function applyRouteFromHash(shouldRender = true) {
     return;
   }
 
-  const editPostMatch = route.match(/^(notices|activities|resources)-edit-(.+)$/);
+  const editPostMatch = route.match(/^(posters|notices|activities|resources)-edit-(.+)$/);
   if (editPostMatch) {
     const [, collection, id] = editPostMatch;
     const existing = getPosts(collection).find((post) => post.id === id);
@@ -1642,7 +1673,7 @@ function createBlankPost(collection) {
     category: meta.defaultCategory,
     status: "published",
     views: 0,
-    attachmentLabel: collection === "resources" ? "자료 보기" : "첨부 자료 보기",
+    attachmentLabel: meta.defaultAttachmentLabel || "첨부 자료 보기",
     attachmentUrl: "",
     icon: "document",
     pinned: false,
@@ -1658,6 +1689,7 @@ function normalizeContent(content, options = {}) {
     notices: [],
     activities: [],
     resources: [],
+    posters: [],
     aboutItems: [],
     contactItems: [],
   };
@@ -1668,7 +1700,7 @@ function normalizeContent(content, options = {}) {
     home: { ...base.home, ...((content || {}).home || {}) },
   };
 
-  ["notices", "activities", "resources", "aboutItems", "contactItems"].forEach((key) => {
+  ["posters", "notices", "activities", "resources", "aboutItems", "contactItems"].forEach((key) => {
     if (!Array.isArray(next[key])) next[key] = [];
   });
 
@@ -1696,7 +1728,7 @@ function normalizePost(item, collection, index) {
     summary: item.summary || item.description || item.body || "",
     body: item.body || item.content || item.description || item.summary || "",
     image: item.image || "",
-    attachmentLabel: item.attachmentLabel || (collection === "resources" ? "자료 보기" : "첨부 자료 보기"),
+    attachmentLabel: item.attachmentLabel || meta.defaultAttachmentLabel || "첨부 자료 보기",
     attachmentUrl: item.attachmentUrl || item.link || "",
     icon: item.icon || "document",
     category: item.category || meta.defaultCategory,

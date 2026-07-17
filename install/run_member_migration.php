@@ -15,11 +15,12 @@ try {
     $count += execute_sql_file(__DIR__ . '/../database/schema.sql');
     sync_bootstrap_admin();
     $count += execute_sql_file(__DIR__ . '/../database/migration_members.sql');
+    $count += execute_sql_file(__DIR__ . '/../database/migration_posters.sql');
 
-    echo sprintf("Member migration complete. Executed statements: %d\n", $count);
+    echo sprintf("Site migration complete. Executed statements: %d\n", $count);
 } catch (Throwable $error) {
     fwrite(STDERR, sprintf(
-        "Member migration failed: %s: %s\n",
+        "Site migration failed: %s: %s\n",
         get_class($error),
         $error->getMessage()
     ));
