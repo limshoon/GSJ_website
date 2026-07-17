@@ -1338,6 +1338,13 @@ function initBackToTop() {
 
   if (!backToTop) return;
 
+  const updateBackToTop = () => {
+    backToTop.classList.toggle("is-visible", window.scrollY > 360);
+  };
+
+  updateBackToTop();
+  window.addEventListener("scroll", updateBackToTop, { passive: true });
+
   backToTop.addEventListener("click", () => {
     window.scrollTo({
       top: 0,

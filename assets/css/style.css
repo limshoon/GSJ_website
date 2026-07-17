@@ -1217,8 +1217,19 @@ address {
   cursor: pointer;
   font-size: 22px;
   font-weight: var(--font-weight-regular);
+  opacity: 0;
+  pointer-events: none;
   place-items: center;
-  transition: transform 160ms ease, box-shadow 160ms ease;
+  transform: translateY(10px);
+  visibility: hidden;
+  transition: opacity 160ms ease, transform 160ms ease, box-shadow 160ms ease, visibility 160ms ease;
+}
+
+.back-to-top.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+  visibility: visible;
 }
 
 .back-to-top:hover {
