@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS members (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  email VARCHAR(190) NOT NULL,
+  name VARCHAR(120) NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  phone VARCHAR(40) NOT NULL DEFAULT '',
+  organization VARCHAR(160) NOT NULL DEFAULT '',
+  status ENUM('pending', 'approved', 'rejected', 'suspended') NOT NULL DEFAULT 'pending',
+  memo TEXT NULL,
+  approved_at DATETIME NULL,
+  approved_by INT UNSIGNED NULL,
+  last_login_at DATETIME NULL,
+  failed_login_count INT UNSIGNED NOT NULL DEFAULT 0,
+  locked_until DATETIME NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY members_email_unique (email),
+  KEY members_status_idx (status),
+  KEY members_approved_by_idx (approved_by),
+  KEY members_locked_idx (locked_until),
+  CONSTRAINT members_approved_by_fk FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="과학, 수학, 정보 교과의 교육 환경 개선과 조합원의 권익 보호를 위한 과수정 교원노동조합 공식 웹사이트"
+    />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#1346FF" />
+    <link rel="canonical" href="https://smitu.kr/" />
+    <link rel="sitemap" type="application/xml" href="https://smitu.kr/sitemap.xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="ko_KR" />
+    <meta property="og:site_name" content="과수정 교원노동조합" />
+    <meta property="og:title" content="과수정 교원노동조합" />
+    <meta
+      property="og:description"
+      content="과학, 수학, 정보 교과의 교육 환경 개선과 조합원의 권익 보호를 위한 과수정 교원노동조합 공식 웹사이트"
+    />
+    <meta property="og:url" content="https://smitu.kr/" />
+    <meta property="og:image" content="https://smitu.kr/assets/images/smitu-thumbnail.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://smitu.kr/assets/images/smitu-thumbnail.png" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "과수정 교원노동조합",
+        "alternateName": "과수정",
+        "url": "https://smitu.kr/",
+        "description": "과학, 수학, 정보 교과의 교육 환경 개선과 조합원의 권익 보호를 위한 과수정 교원노동조합 공식 웹사이트"
+      }
+    </script>
+    <title>과수정 교원노동조합 | 과학·수학·정보 교과 노동조합</title>
+    <link rel="icon" href="assets/images/smitu-thumbnail.png" />
+    <link rel="apple-touch-icon" href="assets/images/smitu-thumbnail.png" />
+    <!-- Pretendard CDN: 정적 사이트에서 별도 설치 없이 한국어 웹폰트를 적용합니다. -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
+    <link rel="stylesheet" href="assets/css/style.css?v=20260717-posterfade" />
+    <script src="assets/js/liquid-glass-panel.js?v=20260716-cafe24" defer></script>
+    <script src="assets/js/main.js?v=20260717-posters" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문으로 바로가기</a>
+
+    <!-- Sidebar -->
+    <aside class="site-sidebar" aria-label="사이트 사이드바">
+      <a class="site-logo" href="index.php#home" aria-label="과수정 교원노동조합 홈으로 이동">
+        <img class="site-logo__brand" src="assets/images/smitu-logo-full.png?v=20260716-logo" alt="" aria-hidden="true" />
+      </a>
+
+      <button class="site-menu-button" type="button" aria-label="메뉴 열기" aria-controls="site-nav" aria-expanded="false">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </button>
+
+      <nav class="site-nav" id="site-nav" aria-label="주요 메뉴">
+        <ul class="site-nav__list">
+          <li><a class="site-nav__link is-active" href="index.php#home" data-section="home">홈</a></li>
+          <li><a class="site-nav__link" href="poster.php" data-section="posters">포스터</a></li>
+          <li><a class="site-nav__link" href="notice.php" data-section="notice">공지사항</a></li>
+          <li><a class="site-nav__link" href="activity.php" data-section="activity">활동</a></li>
+          <li><a class="site-nav__link" href="resource.php" data-section="resources">자료실</a></li>
+          <li><a class="site-nav__link" href="contact.php" data-section="contact">문의</a></li>
+        </ul>
+        <div class="site-auth-links" aria-label="회원 메뉴">
+          <a class="site-auth-link" href="login.php">로그인</a>
+          <a class="site-auth-link" href="signup.php">회원가입</a>
+        </div>
+      </nav>
+    </aside>
+
+    <main class="site-main" id="main">
+      <!-- Home Section -->
+      <section class="section section--home" id="home" aria-labelledby="home-title">
+        <div class="hero glass-panel">
+          <div class="hero__content">
+            <h1 class="hero__title" id="home-title">
+              <span>과학.</span>
+              <span>수학.</span>
+              <span>정보.</span>
+            </h1>
+            <p class="hero__subtitle">우리의 권리, 우리의 연대.</p>
+            <p class="hero__copy">
+              과학, 수학, 정보 교과의 교육 환경 개선과 조합원의 권익 보호를 위해 함께 행동합니다.
+            </p>
+          </div>
+          <div class="hero__visual">
+            <div class="hero__logo-stage" role="img" aria-label="푸른 유리 질감으로 표현된 과수정 로고 심볼">
+              <img class="hero__logo-fallback" src="assets/images/smitu-symbol-mask.png" alt="" aria-hidden="true" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Poster Section -->
+      <section class="section home-section-row section--posters" id="posters" aria-labelledby="poster-title">
+        <div class="section-panel glass-panel home-section poster-home-section">
+          <div class="section-panel__header home-section__header poster-section__header">
+            <span class="section-panel__bar" aria-hidden="true"></span>
+            <h2 class="section-panel__title" id="poster-title">포스터</h2>
+            <p class="section-panel__copy">조합의 주요 안내와 캠페인 포스터를 확인할 수 있습니다.</p>
+            <a class="poster-section__link" href="poster.php">전체 보기</a>
+          </div>
+
+          <div class="poster-carousel" data-poster-carousel>
+            <button class="poster-carousel__button poster-carousel__button--prev" type="button" data-poster-direction="-1" aria-label="이전 포스터 보기">
+              ‹
+            </button>
+            <div class="poster-carousel__viewport">
+              <div class="poster-carousel__track" id="poster-carousel-list" role="list"></div>
+            </div>
+            <button class="poster-carousel__button poster-carousel__button--next" type="button" data-poster-direction="1" aria-label="다음 포스터 보기">
+              ›
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Notice Section -->
+      <section class="section home-section-row" id="notice" aria-labelledby="notice-title">
+        <div class="section-panel glass-panel home-section">
+          <div class="section-panel__header home-section__header">
+            <span class="section-panel__bar" aria-hidden="true"></span>
+            <h2 class="section-panel__title" id="notice-title">공지사항</h2>
+            <p class="section-panel__copy">조합의 주요 일정과 소식을 확인할 수 있습니다.</p>
+          </div>
+          <div class="notice-list home-section__grid" id="notice-list" role="list"></div>
+        </div>
+      </section>
+
+      <!-- Contact Section -->
+      <section class="section home-section-row" id="contact" aria-labelledby="contact-title">
+        <div class="section-panel glass-panel home-section">
+          <div class="section-panel__header home-section__header">
+            <span class="section-panel__bar" aria-hidden="true"></span>
+            <h2 class="section-panel__title" id="contact-title">문의</h2>
+            <p class="section-panel__copy">전화, 이메일, 방문 문의 정보를 확인할 수 있습니다.</p>
+          </div>
+          <div class="card-grid card-grid--three home-section__grid" id="contact-list"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+      <div class="site-footer__office">
+        <strong>과수정 교원노동조합 사무실</strong>
+        <address>
+          서울특별시 00구 00로 00 0000빌딩 000호<br />
+          T. 02-000-0000&nbsp;&nbsp;&nbsp;&nbsp; E. smi.union@example.com
+        </address>
+      </div>
+      <p class="site-footer__copyright">© 2024 과수정 교원노동조합. ALL RIGHTS RESERVED.</p>
+      <div class="site-footer__sns" aria-label="SNS 링크">
+        <strong>SNS</strong>
+        <ul>
+          <li><a href="#" aria-label="Instagram">Instagram</a></li>
+          <li><a href="#" aria-label="Facebook">Facebook</a></li>
+          <li><a href="#" aria-label="YouTube">YouTube</a></li>
+        </ul>
+      </div>
+    </footer>
+
+    <button class="back-to-top" type="button" id="back-to-top" aria-label="페이지 맨 위로 이동">
+      ↑
+    </button>
+  </body>
+</html>

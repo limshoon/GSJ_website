@@ -1,2 +1,17 @@
 node_modules/
 .netlify/
+.DS_Store
+**/.DS_Store
+
+# Server-local secrets. Keep real Cafe24 DB credentials on the server only.
+config/config.php
+config/database.php
+.env
+
+# User/admin uploads should not be overwritten by automated deploys.
+uploads/*
+!uploads/.htaccess
+!uploads/images/
+!uploads/images/.gitkeep
+!uploads/files/
+!uploads/files/.gitkeep

@@ -1,9 +1,0 @@
-{
-  "private": true,
-  "scripts": {
-    "check": "node --check js/main.js && node --check js/login.js && node --check js/signup.js && node --check admin/admin-app.js && node --check netlify/functions/admin-content.mjs && node --check netlify/functions/admin-login.mjs && node --check netlify/functions/admin-logout.mjs && node --check netlify/functions/admin-session.mjs && node --check netlify/functions/admin-signup.mjs && node --check netlify/functions/admin-users.mjs"
-  },
-  "dependencies": {
-    "@netlify/blobs": "^10.0.10"
-  }
-}

@@ -58,7 +58,10 @@ const sectionLabels = {
   activities: "활동 관리",
   resources: "자료실 관리",
   contactItems: "문의 정보 관리",
-  admins: "관리자 승인",
+  members: "회원 관리",
+  admins: "관리자 계정",
+  account: "계정 정보",
+  password: "비밀번호 변경",
   home: "홈 화면 설정",
   site: "사이트 설정",
   aboutItems: "조합소개",
@@ -76,7 +79,8 @@ const blankItems = {
 const state = {
   content: null,
   currentUser: null,
-  adminUsers: { users: [], requests: [] },
+  adminUsers: { users: [] },
+  members: { members: [] },
   connected: false,
   dirty: false,
   activeSection: "dashboard",
@@ -103,6 +107,7 @@ const logoutButton = document.querySelector("#logout-button");
 const statusMessage = document.querySelector("#status-message");
 const adminTitle = document.querySelector("#admin-title");
 const adminUserLine = document.querySelector("#admin-user-line");
+const csrfToken = document.querySelector("meta[name='csrf-token']")?.content || "";
 
 function init() {
   document.querySelectorAll("[data-admin-section]").forEach((button) => {
@@ -122,23 +127,35 @@ function init() {
 
 async function bootstrap() {
   try {
-    const session = await apiRequest("/.netlify/functions/admin-session");
+    const session = await apiRequest("/api/session.php");
     state.currentUser = session.user;
     state.connected = true;
     adminUserLine.textContent = `${session.user.name || session.user.email} 계정으로 로그인했습니다.`;
 
-    const [contentPayload, usersPayload] = await Promise.all([
-      apiRequest("/.netlify/functions/admin-content"),
-      apiRequest("/.netlify/functions/admin-users"),
+    const [contentPayload, usersPayload, membersPayload] = await Promise.all([
+      apiRequest("/api/content.php"),
+      apiRequest("/api/users.php"),
+      apiRequest("/api/members.php"),
     ]);
 
     state.content = normalizeContent(contentPayload.content);
     state.adminUsers = usersPayload;
+    state.members = membersPayload;
     applyRouteFromHash(false);
+    if (state.currentUser.forcePasswordChange) {
+      state.activeSection = "password";
+      state.editing = null;
+      updateAdminRoute("password");
+    }
     renderEditor();
-    setStatus("콘텐츠를 불러왔습니다.", "success");
+    setStatus(
+      state.currentUser.forcePasswordChange
+        ? "보안을 위해 최초 로그인 후 비밀번호를 먼저 변경해 주세요."
+        : "콘텐츠를 불러왔습니다.",
+      state.currentUser.forcePasswordChange ? "error" : "success",
+    );
   } catch (error) {
-    window.location.href = `/login.html?next=${encodeURIComponent("/admin/")}`;
+    window.location.href = `/admin/login.php?next=${encodeURIComponent("/admin/dashboard.php")}`;
   }
 }
 
@@ -149,6 +166,7 @@ async function apiRequest(url, options = {}) {
     ...options,
     headers: {
       ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...(options.method && options.method !== "GET" && csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
       ...(options.headers || {}),
     },
   });
@@ -169,6 +187,7 @@ function renderEditor() {
 
   if (state.editing) {
     editor.innerHTML = renderPostEditor();
+    initRichTextEditors();
     return;
   }
 
@@ -184,6 +203,21 @@ function renderEditor() {
 
   if (state.activeSection === "admins") {
     editor.innerHTML = renderAdminUsersSection();
+    return;
+  }
+
+  if (state.activeSection === "members") {
+    editor.innerHTML = renderMembersSection();
+    return;
+  }
+
+  if (state.activeSection === "account") {
+    editor.innerHTML = renderAccountSection();
+    return;
+  }
+
+  if (state.activeSection === "password") {
+    editor.innerHTML = renderPasswordSection();
     return;
   }
 
@@ -213,7 +247,7 @@ function syncTopbar() {
 }
 
 function renderDashboard() {
-  const cards = POST_COLLECTIONS.map((collection) => {
+  const contentCards = POST_COLLECTIONS.map((collection) => {
     const posts = getPosts(collection);
     const published = posts.filter((post) => post.status === "published").length;
 
@@ -226,6 +260,16 @@ function renderDashboard() {
       </article>
     `;
   }).join("");
+  const members = state.members.members || [];
+  const pendingMembers = members.filter((member) => member.status === "pending").length;
+  const cards = `${contentCards}
+    <article class="admin-stat-card">
+      <span>회원</span>
+      <strong>${members.length}</strong>
+      <small>승인 대기 ${pendingMembers}명</small>
+      <button class="ghost-button" type="button" data-action="section" data-section-target="members">관리하기</button>
+    </article>
+  `;
   const recentPosts = POST_COLLECTIONS.flatMap((collection) => getPosts(collection).map((post) => ({ ...post, collection })))
     .sort((a, b) => getPostTime(b) - getPostTime(a))
     .slice(0, 8);
@@ -440,11 +484,14 @@ function renderSettingsSection(section) {
     ]);
   }
   if (section === "contactItems") {
-    return renderCollectionSection("contactItems", "문의 정보", "전화, 이메일, 방문 안내를 수정합니다.", content.contactItems, [
+    return renderCollectionSection("contactItems", "문의 정보", "전화, 이메일, 방문 안내와 지도 좌표를 수정합니다.", content.contactItems, [
       { name: "title", label: "제목" },
       { name: "main", label: "주요 내용" },
-      { name: "sub", label: "보조 내용" },
+      { name: "sub", label: "보조 내용 / 운영시간" },
       { name: "icon", label: "아이콘", type: "select", options: iconOptions },
+      { name: "mapProvider", label: "지도 제공자", placeholder: "kakao 또는 google" },
+      { name: "mapLat", label: "위도" },
+      { name: "mapLng", label: "경도" },
     ]);
   }
   return "";
@@ -500,56 +547,241 @@ function renderHomeSection(content) {
 }
 
 function renderAdminUsersSection() {
-  const requests = state.adminUsers.requests || [];
   const users = state.adminUsers.users || [];
 
   return `
     <section class="editor-section">
       <div class="section-heading">
         <div>
-          <h3 class="admin-section-title">관리자 가입 요청</h3>
-          <p>승인된 사람만 관리자 로그인과 게시물 수정이 가능합니다.</p>
+          <h3 class="admin-section-title">관리자 계정</h3>
+          <p>관리자만 새 계정을 추가하고 수정할 수 있습니다. 최고관리자는 삭제할 수 없습니다.</p>
         </div>
       </div>
-      <div class="admin-request-list">
-        ${requests.length ? requests.map(renderAdminRequest).join("") : `<p class="empty-editor">승인 대기 중인 요청이 없습니다.</p>`}
-      </div>
-      <div class="section-heading section-heading--sub">
+      <form class="admin-user-create" id="admin-user-create-form">
         <div>
-          <h3 class="admin-section-title">승인된 관리자</h3>
-          <p>관리자 계정만 표시됩니다. 일반 회원 기능은 없습니다.</p>
+          <h4>관리자 추가</h4>
+          <p>새 관리자에게 임시 비밀번호를 발급합니다. 첫 로그인 후 비밀번호 변경이 요구됩니다.</p>
         </div>
-      </div>
+        <div class="field-grid">
+          <label>
+            <span>이메일</span>
+            <input name="email" type="email" autocomplete="off" required />
+          </label>
+          <label>
+            <span>이름</span>
+            <input name="name" autocomplete="off" />
+          </label>
+          <label>
+            <span>임시 비밀번호</span>
+            <input name="password" type="password" autocomplete="new-password" minlength="8" required />
+          </label>
+          <label>
+            <span>권한</span>
+            <select name="role">
+              ${renderOptions([["admin", "관리자"], ["owner", "최고관리자"]], "admin")}
+            </select>
+          </label>
+        </div>
+        <button class="primary-button" type="submit">관리자 추가</button>
+      </form>
       <div class="admin-user-list">
-        ${users.map(renderApprovedAdmin).join("") || `<p class="empty-editor">승인된 관리자가 없습니다.</p>`}
+        ${users.map(renderApprovedAdmin).join("") || `<p class="empty-editor">등록된 관리자가 없습니다.</p>`}
       </div>
     </section>
   `;
 }
 
-function renderAdminRequest(request) {
+function renderApprovedAdmin(user) {
+  const isOwner = user.role === "owner";
+  const isSelf = String(user.id) === String(state.currentUser?.id);
+
   return `
-    <article class="admin-request-card">
-      <div>
-        <strong>${escapeHtml(request.name || request.email)}</strong>
-        <span>${escapeHtml(request.email)}</span>
-        <small>${formatDateTime(request.requestedAt)} 요청</small>
+    <form class="admin-user-card admin-user-edit-form" data-user-id="${escapeHtml(user.id)}">
+      <div class="admin-user-card__summary">
+        <strong>${escapeHtml(user.name || user.email)}</strong>
+        <span>${escapeHtml(user.email)}</span>
+        <small>${isOwner ? "최고관리자" : "관리자"}${isSelf ? " · 현재 로그인" : ""}${user.forcePasswordChange ? " · 비밀번호 변경 필요" : ""}</small>
       </div>
-      <div class="item-actions">
-        <button class="secondary-button" type="button" data-admin-action="approve" data-request-id="${escapeHtml(request.id)}">승인</button>
-        <button class="danger-button" type="button" data-admin-action="reject" data-request-id="${escapeHtml(request.id)}">거절</button>
+      <div class="admin-user-card__fields">
+        <label>
+          <span>이메일</span>
+          <input name="email" type="email" value="${escapeHtml(user.email)}" required />
+        </label>
+        <label>
+          <span>이름</span>
+          <input name="name" value="${escapeHtml(user.name || "")}" required />
+        </label>
+        <label>
+          <span>권한</span>
+          <select name="role" ${isOwner ? "disabled" : ""}>
+            ${renderOptions([["admin", "관리자"], ["owner", "최고관리자"]], user.role || "admin")}
+          </select>
+        </label>
+        <label>
+          <span>새 비밀번호</span>
+          <input name="password" type="password" autocomplete="new-password" placeholder="변경 시에만 입력" />
+        </label>
+        <label class="checkbox-field admin-user-checkbox">
+          <input name="forcePasswordChange" type="checkbox" ${user.forcePasswordChange ? "checked" : ""} />
+          <span>다음 로그인 시 비밀번호 변경 요구</span>
+        </label>
       </div>
-    </article>
+      <div class="admin-user-card__actions">
+        <button class="secondary-button" type="submit">수정 저장</button>
+        <button class="danger-button" type="button" data-action="delete-admin-user" data-user-id="${escapeHtml(user.id)}" ${isOwner || isSelf ? "disabled" : ""}>삭제</button>
+      </div>
+    </form>
   `;
 }
 
-function renderApprovedAdmin(user) {
+function renderMembersSection() {
+  const members = state.members.members || [];
+  const pending = members.filter((member) => member.status === "pending").length;
+  const approved = members.filter((member) => member.status === "approved").length;
+
   return `
-    <article class="admin-user-card">
-      <strong>${escapeHtml(user.name || user.email)}</strong>
-      <span>${escapeHtml(user.email)}</span>
-      <small>${escapeHtml(user.role || "admin")}${user.source === "env" ? " · 초기 관리자" : ""}</small>
-    </article>
+    <section class="editor-section">
+      <div class="section-heading">
+        <div>
+          <h3 class="admin-section-title">회원 관리</h3>
+          <p>가입 신청을 승인하면 해당 회원이 로그인하고 마이페이지를 사용할 수 있습니다.</p>
+        </div>
+      </div>
+      <div class="admin-member-summary">
+        <span>전체 ${members.length}명</span>
+        <span>승인 대기 ${pending}명</span>
+        <span>승인 완료 ${approved}명</span>
+      </div>
+      <div class="admin-user-list admin-member-list">
+        ${members.map(renderMemberCard).join("") || `<p class="empty-editor">가입 신청된 회원이 없습니다.</p>`}
+      </div>
+    </section>
+  `;
+}
+
+function renderMemberCard(member) {
+  const status = member.status || "pending";
+
+  return `
+    <form class="admin-user-card admin-member-card member-admin-form" data-member-id="${escapeHtml(member.id)}">
+      <div class="admin-user-card__summary">
+        <strong>${escapeHtml(member.name || member.email)}</strong>
+        <span>${escapeHtml(member.email)}</span>
+        <small>
+          <span class="status-pill status-pill--${escapeHtml(status)}">${escapeHtml(getMemberStatusLabel(status))}</span>
+          가입 ${escapeHtml(formatDate(member.createdAt))}
+        </small>
+      </div>
+      <div class="admin-user-card__fields">
+        <label>
+          <span>상태</span>
+          <select name="status">
+            ${renderOptions([
+              ["pending", "승인 대기"],
+              ["approved", "승인 완료"],
+              ["rejected", "거절"],
+              ["suspended", "이용 중지"],
+            ], status)}
+          </select>
+        </label>
+        <label>
+          <span>소속</span>
+          <input value="${escapeHtml(member.organization || "-")}" readonly />
+        </label>
+        <label>
+          <span>연락처</span>
+          <input value="${escapeHtml(member.phone || "-")}" readonly />
+        </label>
+        <label>
+          <span>최근 로그인</span>
+          <input value="${escapeHtml(formatDate(member.lastLoginAt) || "-")}" readonly />
+        </label>
+        <label class="wide-field">
+          <span>관리 메모</span>
+          <textarea name="memo" placeholder="승인 사유, 확인 메모 등을 남길 수 있습니다.">${escapeHtml(member.memo || "")}</textarea>
+        </label>
+      </div>
+      <div class="admin-user-card__actions">
+        ${status === "pending" ? `<button class="secondary-button" type="button" data-action="quick-member-status" data-member-id="${escapeHtml(member.id)}" data-status="approved">승인</button>` : ""}
+        ${status === "pending" ? `<button class="danger-button" type="button" data-action="quick-member-status" data-member-id="${escapeHtml(member.id)}" data-status="rejected">거절</button>` : ""}
+        <button class="primary-button" type="submit">상태 저장</button>
+      </div>
+    </form>
+  `;
+}
+
+function getMemberStatusLabel(status) {
+  return {
+    pending: "승인 대기",
+    approved: "승인 완료",
+    rejected: "거절",
+    suspended: "이용 중지",
+  }[status] || "승인 대기";
+}
+
+function renderAccountSection() {
+  const user = state.currentUser || {};
+
+  return `
+    <section class="editor-section">
+      <div class="section-heading">
+        <div>
+          <h3 class="admin-section-title">계정 정보</h3>
+          <p>이메일과 이름을 변경해도 현재 로그인 세션은 유지됩니다.</p>
+        </div>
+      </div>
+      <form class="account-form" id="account-form">
+        <div class="field-grid">
+          <label>
+            <span>이메일</span>
+            <input name="email" type="email" value="${escapeHtml(user.email || "")}" required />
+          </label>
+          <label>
+            <span>이름</span>
+            <input name="name" value="${escapeHtml(user.name || "")}" required />
+          </label>
+          <label class="wide-field">
+            <span>프로필</span>
+            <textarea name="profile" placeholder="관리자 메모나 역할 설명을 입력할 수 있습니다.">${escapeHtml(user.profile || "")}</textarea>
+          </label>
+        </div>
+        <div class="admin-edit-actions">
+          <button class="primary-button" type="submit">계정 정보 저장</button>
+        </div>
+      </form>
+    </section>
+  `;
+}
+
+function renderPasswordSection() {
+  return `
+    <section class="editor-section">
+      <div class="section-heading">
+        <div>
+          <h3 class="admin-section-title">비밀번호 변경</h3>
+          <p>${state.currentUser?.forcePasswordChange ? "최초 로그인 보안을 위해 새 비밀번호로 변경해 주세요." : "현재 비밀번호 확인 후 새 비밀번호를 저장합니다."}</p>
+        </div>
+      </div>
+      <form class="account-form" id="password-form">
+        <div class="field-grid">
+          <label>
+            <span>현재 비밀번호</span>
+            <input name="currentPassword" type="password" autocomplete="current-password" required />
+          </label>
+          <label>
+            <span>새 비밀번호</span>
+            <input name="newPassword" type="password" autocomplete="new-password" minlength="8" required />
+          </label>
+          <label>
+            <span>새 비밀번호 확인</span>
+            <input name="confirmPassword" type="password" autocomplete="new-password" minlength="8" required />
+          </label>
+        </div>
+        <div class="admin-edit-actions">
+          <button class="primary-button" type="submit">비밀번호 변경</button>
+        </div>
+      </form>
+    </section>
   `;
 }
 
@@ -669,6 +901,36 @@ function handleEditorSubmit(event) {
   const postForm = event.target.closest("#post-editor-form");
   if (postForm) {
     saveCurrentPost();
+    return;
+  }
+
+  const createUserForm = event.target.closest("#admin-user-create-form");
+  if (createUserForm) {
+    createAdminUser(createUserForm);
+    return;
+  }
+
+  const editUserForm = event.target.closest(".admin-user-edit-form");
+  if (editUserForm) {
+    updateAdminUser(editUserForm);
+    return;
+  }
+
+  const memberForm = event.target.closest(".member-admin-form");
+  if (memberForm) {
+    updateMember(memberForm);
+    return;
+  }
+
+  const accountForm = event.target.closest("#account-form");
+  if (accountForm) {
+    saveAccountProfile(accountForm);
+    return;
+  }
+
+  const passwordForm = event.target.closest("#password-form");
+  if (passwordForm) {
+    changePassword(passwordForm);
   }
 }
 
@@ -691,16 +953,10 @@ function handleEditorChange(event) {
 }
 
 async function handleEditorClick(event) {
-  const button = event.target.closest("button, a, [data-action], [data-admin-action]");
+  const button = event.target.closest("button, a, [data-action]");
   if (!button) return;
 
   const action = button.dataset.action;
-  const adminAction = button.dataset.adminAction;
-
-  if (adminAction) {
-    await handleAdminRequestAction(button);
-    return;
-  }
 
   if (!action) return;
 
@@ -717,6 +973,8 @@ async function handleEditorClick(event) {
   if (action === "add-setting-item") addSettingItem(button.dataset.collection);
   if (action === "delete-setting") deleteSettingItem(button.dataset.collection, Number(button.dataset.index));
   if (action === "move-setting") moveSettingItem(button.dataset.collection, Number(button.dataset.index), button.dataset.direction);
+  if (action === "delete-admin-user") await deleteAdminUser(button.dataset.userId);
+  if (action === "quick-member-status") await quickUpdateMemberStatus(button.dataset.memberId, button.dataset.status);
 }
 
 async function handlePrimarySave() {
@@ -725,6 +983,179 @@ async function handlePrimarySave() {
     return;
   }
   await saveCurrentSettings();
+}
+
+async function createAdminUser(form) {
+  const data = new FormData(form);
+
+  try {
+    const payload = await apiRequest("/api/users.php", {
+      method: "POST",
+      body: JSON.stringify({
+        email: data.get("email"),
+        name: data.get("name"),
+        password: data.get("password"),
+        role: data.get("role"),
+      }),
+    });
+    state.adminUsers.users = payload.users || [];
+    form.reset();
+    renderEditor();
+    setStatus("관리자 계정을 추가했습니다.", "success");
+    showToast("관리자 계정을 추가했습니다.", "success");
+  } catch (error) {
+    setStatus(error.message, "error");
+    showToast(error.message, "error");
+  }
+}
+
+async function updateAdminUser(form) {
+  const data = new FormData(form);
+  const roleSelect = form.querySelector("select[name='role']");
+
+  try {
+    const payload = await apiRequest("/api/users.php", {
+      method: "PUT",
+      body: JSON.stringify({
+        id: form.dataset.userId,
+        email: data.get("email"),
+        name: data.get("name"),
+        password: data.get("password"),
+        role: roleSelect?.disabled ? "owner" : data.get("role"),
+        forcePasswordChange: Boolean(data.get("forcePasswordChange")),
+      }),
+    });
+    state.adminUsers.users = payload.users || [];
+    if (payload.currentUser) state.currentUser = payload.currentUser;
+    syncAdminUserLine();
+    renderEditor();
+    setStatus("관리자 계정을 수정했습니다.", "success");
+    showToast("관리자 계정을 수정했습니다.", "success");
+  } catch (error) {
+    setStatus(error.message, "error");
+    showToast(error.message, "error");
+  }
+}
+
+async function deleteAdminUser(userId) {
+  const user = (state.adminUsers.users || []).find((item) => String(item.id) === String(userId));
+  if (!user) return;
+
+  const ok = await confirmDialog(`"${user.name || user.email}" 관리자 계정을 삭제하시겠습니까?\n삭제된 계정은 로그인할 수 없습니다.`);
+  if (!ok) return;
+
+  try {
+    const payload = await apiRequest("/api/users.php", {
+      method: "DELETE",
+      body: JSON.stringify({ id: userId }),
+    });
+    state.adminUsers.users = payload.users || [];
+    renderEditor();
+    setStatus("관리자 계정을 삭제했습니다.", "success");
+    showToast("관리자 계정을 삭제했습니다.", "success");
+  } catch (error) {
+    setStatus(error.message, "error");
+    showToast(error.message, "error");
+  }
+}
+
+async function updateMember(form) {
+  const data = new FormData(form);
+
+  try {
+    const payload = await apiRequest("/api/members.php", {
+      method: "PUT",
+      body: JSON.stringify({
+        id: form.dataset.memberId,
+        status: data.get("status"),
+        memo: data.get("memo"),
+      }),
+    });
+    state.members = payload;
+    renderEditor();
+    setStatus("회원 상태를 저장했습니다.", "success");
+    showToast("회원 상태를 저장했습니다.", "success");
+  } catch (error) {
+    setStatus(error.message, "error");
+    showToast(error.message, "error");
+  }
+}
+
+async function quickUpdateMemberStatus(memberId, status) {
+  const form = [...editor.querySelectorAll(".member-admin-form")]
+    .find((item) => String(item.dataset.memberId) === String(memberId));
+  if (!form) return;
+
+  form.querySelector("select[name='status']").value = status;
+  await updateMember(form);
+}
+
+async function saveAccountProfile(form) {
+  const data = new FormData(form);
+
+  try {
+    const payload = await apiRequest("/api/account.php", {
+      method: "PUT",
+      body: JSON.stringify({
+        action: "profile",
+        email: data.get("email"),
+        name: data.get("name"),
+        profile: data.get("profile"),
+      }),
+    });
+    state.currentUser = payload.user;
+    await refreshAdminUsers();
+    syncAdminUserLine();
+    renderEditor();
+    setStatus("계정 정보를 저장했습니다.", "success");
+    showToast("계정 정보를 저장했습니다.", "success");
+  } catch (error) {
+    setStatus(error.message, "error");
+    showToast(error.message, "error");
+  }
+}
+
+async function changePassword(form) {
+  const data = new FormData(form);
+
+  try {
+    const payload = await apiRequest("/api/account.php", {
+      method: "PUT",
+      body: JSON.stringify({
+        action: "password",
+        currentPassword: data.get("currentPassword"),
+        newPassword: data.get("newPassword"),
+        confirmPassword: data.get("confirmPassword"),
+      }),
+    });
+    state.currentUser = payload.user;
+    form.reset();
+    await refreshAdminUsers();
+    syncAdminUserLine();
+    renderEditor();
+    setStatus("비밀번호를 변경했습니다.", "success");
+    showToast("비밀번호를 변경했습니다.", "success");
+  } catch (error) {
+    setStatus(error.message, "error");
+    showToast(error.message, "error");
+  }
+}
+
+async function refreshAdminUsers() {
+  const payload = await apiRequest("/api/users.php");
+  state.adminUsers = payload;
+  if (payload.currentUser) state.currentUser = payload.currentUser;
+}
+
+async function refreshMembers() {
+  state.members = await apiRequest("/api/members.php");
+}
+
+function syncAdminUserLine() {
+  const user = state.currentUser || {};
+  adminUserLine.textContent = `${user.name || user.email || "관리자"} 계정으로 로그인했습니다.`;
+  document.querySelector(".admin-account-menu summary span")?.replaceChildren(document.createTextNode(user.name || user.email || "관리자"));
+  document.querySelector(".admin-account-menu summary small")?.replaceChildren(document.createTextNode(user.role === "owner" ? "최고관리자" : "관리자"));
 }
 
 async function saveCurrentSettings() {
@@ -780,7 +1211,7 @@ async function saveContent(message) {
   setSaveButtonState("saving");
   setStatus("변경 사항을 저장하는 중입니다...");
 
-  const payload = await apiRequest("/.netlify/functions/admin-content", {
+  const payload = await apiRequest("/api/content.php", {
     method: "PUT",
     body: JSON.stringify({ content: state.content }),
   });
@@ -933,29 +1364,17 @@ function moveSettingItem(collection, index, direction) {
   renderEditor();
 }
 
-async function handleAdminRequestAction(button) {
-  button.disabled = true;
-  const action = button.dataset.adminAction;
-  const id = button.dataset.requestId;
-
-  try {
-    state.adminUsers = await apiRequest("/.netlify/functions/admin-users", {
-      method: "POST",
-      body: JSON.stringify({ action, id }),
-    });
-    renderEditor();
-    setStatus(action === "approve" ? "관리자 요청을 승인했습니다." : "관리자 요청을 거절했습니다.", "success");
-  } catch (error) {
-    setStatus(error.message, "error");
-  }
-}
-
 async function handleLogout() {
-  await fetch("/.netlify/functions/admin-logout", { method: "POST", credentials: "same-origin" });
-  window.location.href = "/login.html";
+  await fetch("/api/logout.php", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: csrfToken ? { "X-CSRF-Token": csrfToken } : {},
+  });
+  window.location.href = "/admin/login.php";
 }
 
 function readPostForm(form, collection) {
+  syncRichTextEditors();
   const original = state.editing.draft || {};
   const post = {
     ...original,
@@ -1012,7 +1431,7 @@ function readSettingsFromForm() {
     };
   }
   if (state.activeSection === "aboutItems") state.content.aboutItems = readCollection("aboutItems", ["title", "description", "icon"]);
-  if (state.activeSection === "contactItems") state.content.contactItems = readCollection("contactItems", ["title", "main", "sub", "icon"]);
+  if (state.activeSection === "contactItems") state.content.contactItems = readCollection("contactItems", ["id", "title", "main", "sub", "icon", "mapProvider", "mapLat", "mapLng"]);
 }
 
 function getSectionValue(form, section, field) {
@@ -1065,6 +1484,14 @@ async function prepareManagedUploads(content) {
 
 function setActiveSection(section) {
   if (!sectionLabels[section]) return;
+  if (state.currentUser?.forcePasswordChange && section !== "password") {
+    state.editing = null;
+    state.activeSection = "password";
+    updateAdminRoute("password");
+    renderEditor();
+    setStatus("최초 로그인 후 비밀번호를 먼저 변경해야 합니다.", "error");
+    return;
+  }
   state.editing = null;
   state.activeSection = section;
   updateAdminRoute(section);
@@ -1073,6 +1500,14 @@ function setActiveSection(section) {
 
 function applyRouteFromHash(shouldRender = true) {
   const route = decodeURIComponent(window.location.hash.replace(/^#/, ""));
+
+  if (state.currentUser?.forcePasswordChange && route !== "password") {
+    state.editing = null;
+    state.activeSection = "password";
+    updateAdminRoute("password");
+    if (shouldRender) renderEditor();
+    return;
+  }
 
   if (!route) {
     state.editing = null;
@@ -1321,7 +1756,27 @@ function formatDateTime(value) {
 }
 
 function getPostUrl(collection, item) {
-  return `post.html?type=${encodeURIComponent(collection)}&id=${encodeURIComponent(item.id || "")}`;
+  return `post.php?type=${encodeURIComponent(collection)}&id=${encodeURIComponent(item.id || "")}`;
+}
+
+function initRichTextEditors() {
+  if (!window.tinymce) return;
+  window.tinymce.remove("#post-editor-form textarea[data-field='body']");
+  window.tinymce.init({
+    selector: "#post-editor-form textarea[data-field='body']",
+    menubar: false,
+    height: 360,
+    language: "ko_KR",
+    plugins: "lists link image table code autoresize",
+    toolbar: "undo redo | blocks | bold italic underline | bullist numlist | link image table | code",
+    branding: false,
+    content_style: "body{font-family:Pretendard,system-ui,sans-serif;font-size:16px;line-height:1.7;color:#090C14}",
+  });
+}
+
+function syncRichTextEditors() {
+  if (!window.tinymce) return;
+  window.tinymce.triggerSave();
 }
 
 function renderOptions(options, selectedValue) {

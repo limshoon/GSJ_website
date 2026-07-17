@@ -1,0 +1,24 @@
+Options -Indexes
+RewriteEngine On
+
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+RewriteRule ^(config|includes|database)(/|$) - [F,L]
+
+RewriteRule ^$ index.php [L]
+
+RewriteRule ^index\.html$ index.php [R=301,L]
+RewriteRule ^poster\.html$ poster.php [R=301,L]
+RewriteRule ^posters\.html$ poster.php [R=301,L]
+RewriteRule ^notice\.html$ notice.php [R=301,L]
+RewriteRule ^activity\.html$ activity.php [R=301,L]
+RewriteRule ^resources\.html$ resource.php [R=301,L]
+RewriteRule ^resource\.html$ resource.php [R=301,L]
+RewriteRule ^contact\.html$ contact.php [R=301,L]
+RewriteRule ^post\.html$ post.php [R=301,L]
+RewriteRule ^login\.html$ login.php [R=301,L]
+RewriteRule ^signup\.html$ signup.php [R=301,L]
+RewriteRule ^mypage\.html$ mypage.php [R=301,L]
+RewriteRule ^admin-login\.html$ admin/login.php [R=301,L]
