@@ -22,7 +22,7 @@ jobs:
       - name: Install SFTP client
         run: |
           sudo apt-get update
-          sudo apt-get install -y lftp
+          sudo apt-get install -y openssh-client rsync sshpass
 
       - name: Deploy by SFTP
         env:
@@ -32,6 +32,15 @@ jobs:
           SFTP_DIR: ${{ secrets.CAFE24_SERVER_DIR }}
         run: |
           set -euo pipefail
+
+          SSH_OPTIONS=(
+            -P 22
+            -oBatchMode=no
+            -oStrictHostKeyChecking=no
+            -oUserKnownHostsFile=/dev/null
+            -oPreferredAuthentications=password
+            -oPubkeyAuthentication=no
+          )
 
           REMOTE_CANDIDATES=()
           if [ -n "${SFTP_DIR:-}" ]; then
@@ -50,11 +59,7 @@ jobs:
           TEST_DIR=".codex-deploy-check-${GITHUB_RUN_ID}"
           for candidate in "${REMOTE_CANDIDATES[@]}"; do
             echo "Checking SFTP directory candidate: ${candidate}"
-            if lftp -u "$SFTP_USERNAME","$SFTP_PASSWORD" "sftp://${SFTP_HOST}:22" <<EOF
-          set cmd:fail-exit yes
-          set sftp:auto-confirm yes
-          set net:max-retries 1
-          set net:timeout 15
+            if SSHPASS="$SFTP_PASSWORD" sshpass -e sftp "${SSH_OPTIONS[@]}" "$SFTP_USERNAME@$SFTP_HOST" <<EOF
           cd "$candidate"
           mkdir "$TEST_DIR"
           rmdir "$TEST_DIR"
@@ -68,24 +73,36 @@ jobs:
 
           if [ -z "$REMOTE_DIR" ]; then
             echo "::error::Could not find a writable SFTP directory. Remote root listing follows."
-            timeout 20s lftp -u "$SFTP_USERNAME","$SFTP_PASSWORD" "sftp://${SFTP_HOST}:22" <<EOF || true
-          set sftp:auto-confirm yes
+            timeout 20s env SSHPASS="$SFTP_PASSWORD" sshpass -e sftp "${SSH_OPTIONS[@]}" "$SFTP_USERNAME@$SFTP_HOST" <<EOF || true
           pwd
-          cls -la
+          ls -la
           bye
           EOF
             exit 1
           fi
 
+          STAGING_DIR="$(mktemp -d)"
+          rsync -a \
+            --exclude=".git/" \
+            --exclude=".github/" \
+            --exclude=".DS_Store" \
+            --exclude="*/.DS_Store" \
+            --exclude="config/config.php" \
+            --exclude="config/database.php" \
+            --exclude=".env" \
+            --exclude="uploads/" \
+            --exclude="README.md" \
+            --exclude="CAFE24_SETUP.md" \
+            ./ "$STAGING_DIR/"
+
           echo "Using SFTP directory: ${REMOTE_DIR}"
-          lftp -u "$SFTP_USERNAME","$SFTP_PASSWORD" "sftp://${SFTP_HOST}:22" <<EOF
-          set cmd:fail-exit yes
-          set sftp:auto-confirm yes
-          set net:max-retries 2
-          set net:timeout 20
+          SSHPASS="$SFTP_PASSWORD" sshpass -e sftp "${SSH_OPTIONS[@]}" "$SFTP_USERNAME@$SFTP_HOST" <<EOF
+          lcd "$STAGING_DIR"
           cd "$REMOTE_DIR"
-          mirror --reverse --verbose --exclude-glob ".git/**" --exclude-glob ".github/**" --exclude-glob ".DS_Store" --exclude-glob "*/.DS_Store" --exclude-glob "config/config.php" --exclude-glob "config/database.php" --exclude-glob ".env" --exclude-glob "uploads/**" --exclude-glob "README.md" --exclude-glob "CAFE24_SETUP.md" ./ ./
-          mkdir -p uploads
-          put uploads/.htaccess -o uploads/.htaccess
+          put -r *
+          put .htaccess .htaccess
+          -mkdir uploads
+          lcd "$GITHUB_WORKSPACE"
+          put uploads/.htaccess uploads/.htaccess
           bye
           EOF
