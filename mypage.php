@@ -27,7 +27,7 @@ $csrfToken = member_csrf_token();
     <link rel="icon" href="assets/images/smitu-thumbnail.png" />
     <link rel="apple-touch-icon" href="assets/images/smitu-thumbnail.png" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
-    <link rel="stylesheet" href="assets/css/style.css?v=20260717-logoshadow" />
+    <link rel="stylesheet" href="assets/css/style.css?v=20260717-sectiongap" />
     <script src="assets/js/main.js?v=20260717-posters2" defer></script>
   </head>
   <body>

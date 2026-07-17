@@ -2899,6 +2899,10 @@ body {
   margin-bottom: 104px;
 }
 
+.home-section-row#notice {
+  margin-bottom: clamp(6rem, 12vh, 10rem);
+}
+
 .home-section {
   --home-section-header-width: 17rem;
   display: grid;
@@ -3108,6 +3112,10 @@ body {
 
   .home-section-row#contact {
     margin-bottom: 84px;
+  }
+
+  .home-section-row#notice {
+    margin-bottom: 5rem;
   }
 
   .home-section {
