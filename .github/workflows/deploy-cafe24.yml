@@ -33,9 +33,48 @@ jobs:
         run: |
           set -euo pipefail
 
-          REMOTE_DIR="${FTP_DIR:-.}"
+          REMOTE_CANDIDATES=()
+          if [ -n "${FTP_DIR:-}" ]; then
+            REMOTE_CANDIDATES+=("$FTP_DIR")
+          fi
+          REMOTE_CANDIDATES+=("." "./" "www" "html" "public_html" "htdocs" "web" "smitu.kr")
 
+          REMOTE_DIR=""
+          TEST_DIR=".codex-deploy-check-${GITHUB_RUN_ID}"
+          for candidate in "${REMOTE_CANDIDATES[@]}"; do
+            echo "Checking FTP directory candidate: ${candidate}"
+            if lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_HOST" <<EOF
+          set cmd:fail-exit yes
+          set ftp:ssl-allow no
+          set ftp:passive-mode on
+          set net:max-retries 1
+          set net:timeout 15
+          cd "$candidate"
+          mkdir "$TEST_DIR"
+          rmdir "$TEST_DIR"
+          bye
+          EOF
+            then
+              REMOTE_DIR="$candidate"
+              break
+            fi
+          done
+
+          if [ -z "$REMOTE_DIR" ]; then
+            echo "::error::Could not find a writable FTP directory. Remote root listing follows."
+            lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_HOST" <<EOF
+          set ftp:ssl-allow no
+          set ftp:passive-mode on
+          pwd
+          cls -la
+          bye
+          EOF
+            exit 1
+          fi
+
+          echo "Using FTP directory: ${REMOTE_DIR}"
           lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_HOST" <<EOF
+          set cmd:fail-exit yes
           set ftp:ssl-allow no
           set ftp:passive-mode on
           set net:max-retries 2
