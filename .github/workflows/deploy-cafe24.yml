@@ -33,20 +33,16 @@ jobs:
         run: |
           set -euo pipefail
 
-          REMOTE_DIR="${FTP_DIR:-/}"
-          case "$REMOTE_DIR" in
-            */) ;;
-            *) REMOTE_DIR="${REMOTE_DIR}/" ;;
-          esac
+          REMOTE_DIR="${FTP_DIR:-.}"
 
           lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_HOST" <<EOF
           set ftp:ssl-allow no
           set ftp:passive-mode on
           set net:max-retries 2
           set net:timeout 20
-          mkdir -p "$REMOTE_DIR"
-          mirror --reverse --verbose --exclude-glob ".git/**" --exclude-glob ".github/**" --exclude-glob ".DS_Store" --exclude-glob "*/.DS_Store" --exclude-glob "config/config.php" --exclude-glob "config/database.php" --exclude-glob ".env" --exclude-glob "uploads/**" --exclude-glob "README.md" --exclude-glob "CAFE24_SETUP.md" ./ "$REMOTE_DIR"
-          mkdir -p "$REMOTE_DIR/uploads"
-          put uploads/.htaccess -o "$REMOTE_DIR/uploads/.htaccess"
+          cd "$REMOTE_DIR"
+          mirror --reverse --verbose --exclude-glob ".git/**" --exclude-glob ".github/**" --exclude-glob ".DS_Store" --exclude-glob "*/.DS_Store" --exclude-glob "config/config.php" --exclude-glob "config/database.php" --exclude-glob ".env" --exclude-glob "uploads/**" --exclude-glob "README.md" --exclude-glob "CAFE24_SETUP.md" ./ ./
+          mkdir -p uploads
+          put uploads/.htaccess -o uploads/.htaccess
           bye
           EOF
