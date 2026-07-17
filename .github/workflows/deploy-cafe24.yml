@@ -107,6 +107,93 @@ jobs:
           bye
           EOF
 
+      - name: Write production config
+        env:
+          SFTP_HOST: ${{ secrets.CAFE24_FTP_HOST }}
+          SFTP_USERNAME: ${{ secrets.CAFE24_FTP_USERNAME }}
+          SFTP_PASSWORD: ${{ secrets.CAFE24_FTP_PASSWORD }}
+          SFTP_DIR: ${{ secrets.CAFE24_SERVER_DIR }}
+          DB_HOST: ${{ secrets.CAFE24_DB_HOST || 'localhost' }}
+          DB_NAME: ${{ secrets.CAFE24_DB_NAME || secrets.CAFE24_FTP_USERNAME }}
+          DB_USERNAME: ${{ secrets.CAFE24_DB_USERNAME || secrets.CAFE24_FTP_USERNAME }}
+          DB_PASSWORD: ${{ secrets.CAFE24_DB_PASSWORD || secrets.CAFE24_FTP_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          php_escape() {
+            local value="$1"
+            value="${value//\\/\\\\}"
+            value="${value//\'/\\\'}"
+            printf '%s' "$value"
+          }
+
+          CONFIG_DIR="$(mktemp -d)"
+          DB_HOST_ESC="$(php_escape "$DB_HOST")"
+          DB_NAME_ESC="$(php_escape "$DB_NAME")"
+          DB_USERNAME_ESC="$(php_escape "$DB_USERNAME")"
+          DB_PASSWORD_ESC="$(php_escape "$DB_PASSWORD")"
+
+          cat > "$CONFIG_DIR/config.php" <<PHP
+          <?php
+
+          return [
+              'db' => [
+                  'host' => '${DB_HOST_ESC}',
+                  'name' => '${DB_NAME_ESC}',
+                  'user' => '${DB_USERNAME_ESC}',
+                  'password' => '${DB_PASSWORD_ESC}',
+                  'charset' => 'utf8mb4',
+              ],
+
+              'session' => [
+                  'name' => 'smitu_admin_session',
+                  'lifetime' => 28800,
+                  'timeout' => 28800,
+              ],
+
+              'uploads' => [
+                  'directory' => __DIR__ . '/../uploads',
+                  'url' => '/uploads',
+                  'max_size' => 10485760,
+              ],
+
+              'bootstrap_admin' => [
+                  'email' => 'admin@example.com',
+                  'password' => 'CHANGE_THIS_PASSWORD',
+                  'name' => '최고관리자',
+              ],
+          ];
+          PHP
+
+          cat > "$CONFIG_DIR/database.php" <<PHP
+          <?php
+
+          return [
+              'host' => '${DB_HOST_ESC}',
+              'dbname' => '${DB_NAME_ESC}',
+              'username' => '${DB_USERNAME_ESC}',
+              'password' => '${DB_PASSWORD_ESC}',
+              'charset' => 'utf8mb4',
+          ];
+          PHP
+
+          SSH_OPTIONS=(
+            -P 22
+            -oBatchMode=no
+            -oStrictHostKeyChecking=no
+            -oUserKnownHostsFile=/dev/null
+            -oPreferredAuthentications=password
+            -oPubkeyAuthentication=no
+          )
+
+          REMOTE_DIR="${SFTP_DIR:-/home/hosting_users/${SFTP_USERNAME}/www}"
+          SSHPASS="$SFTP_PASSWORD" sshpass -e sftp "${SSH_OPTIONS[@]}" "$SFTP_USERNAME@$SFTP_HOST" <<EOF
+          cd "$REMOTE_DIR"
+          put "$CONFIG_DIR/config.php" config/config.php
+          put "$CONFIG_DIR/database.php" config/database.php
+          bye
+          EOF
+
       - name: Run member table migration
         env:
           SSH_HOST: ${{ secrets.CAFE24_FTP_HOST }}
