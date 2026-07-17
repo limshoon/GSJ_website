@@ -19,41 +19,40 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install FTP client
+      - name: Install SFTP client
         run: |
           sudo apt-get update
           sudo apt-get install -y lftp
 
-      - name: Deploy by FTP
+      - name: Deploy by SFTP
         env:
-          FTP_HOST: ${{ secrets.CAFE24_FTP_HOST }}
-          FTP_USERNAME: ${{ secrets.CAFE24_FTP_USERNAME }}
-          FTP_PASSWORD: ${{ secrets.CAFE24_FTP_PASSWORD }}
-          FTP_DIR: ${{ secrets.CAFE24_SERVER_DIR }}
+          SFTP_HOST: ${{ secrets.CAFE24_FTP_HOST }}
+          SFTP_USERNAME: ${{ secrets.CAFE24_FTP_USERNAME }}
+          SFTP_PASSWORD: ${{ secrets.CAFE24_FTP_PASSWORD }}
+          SFTP_DIR: ${{ secrets.CAFE24_SERVER_DIR }}
         run: |
           set -euo pipefail
 
           REMOTE_CANDIDATES=()
-          if [ -n "${FTP_DIR:-}" ]; then
-            REMOTE_CANDIDATES+=("$FTP_DIR")
+          if [ -n "${SFTP_DIR:-}" ]; then
+            REMOTE_CANDIDATES+=("$SFTP_DIR")
           fi
           REMOTE_CANDIDATES+=(
             "." "./"
             "www" "html" "public_html" "htdocs" "web"
-            "${FTP_USERNAME}" "${FTP_USERNAME}/www" "/${FTP_USERNAME}/www"
-            "/home/${FTP_USERNAME}/www"
-            "/home/hosting_users/${FTP_USERNAME}/www"
+            "${SFTP_USERNAME}" "${SFTP_USERNAME}/www" "/${SFTP_USERNAME}/www"
+            "/home/${SFTP_USERNAME}/www"
+            "/home/hosting_users/${SFTP_USERNAME}/www"
             "smitu.kr"
           )
 
           REMOTE_DIR=""
           TEST_DIR=".codex-deploy-check-${GITHUB_RUN_ID}"
           for candidate in "${REMOTE_CANDIDATES[@]}"; do
-            echo "Checking FTP directory candidate: ${candidate}"
-            if lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_HOST" <<EOF
+            echo "Checking SFTP directory candidate: ${candidate}"
+            if lftp -u "$SFTP_USERNAME","$SFTP_PASSWORD" "sftp://${SFTP_HOST}:22" <<EOF
           set cmd:fail-exit yes
-          set ftp:ssl-allow no
-          set ftp:passive-mode on
+          set sftp:auto-confirm yes
           set net:max-retries 1
           set net:timeout 15
           cd "$candidate"
@@ -68,10 +67,9 @@ jobs:
           done
 
           if [ -z "$REMOTE_DIR" ]; then
-            echo "::error::Could not find a writable FTP directory. Remote root listing follows."
-            timeout 20s lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_HOST" <<EOF || true
-          set ftp:ssl-allow no
-          set ftp:passive-mode on
+            echo "::error::Could not find a writable SFTP directory. Remote root listing follows."
+            timeout 20s lftp -u "$SFTP_USERNAME","$SFTP_PASSWORD" "sftp://${SFTP_HOST}:22" <<EOF || true
+          set sftp:auto-confirm yes
           pwd
           cls -la
           bye
@@ -79,11 +77,10 @@ jobs:
             exit 1
           fi
 
-          echo "Using FTP directory: ${REMOTE_DIR}"
-          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_HOST" <<EOF
+          echo "Using SFTP directory: ${REMOTE_DIR}"
+          lftp -u "$SFTP_USERNAME","$SFTP_PASSWORD" "sftp://${SFTP_HOST}:22" <<EOF
           set cmd:fail-exit yes
-          set ftp:ssl-allow no
-          set ftp:passive-mode on
+          set sftp:auto-confirm yes
           set net:max-retries 2
           set net:timeout 20
           cd "$REMOTE_DIR"
