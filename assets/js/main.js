@@ -1231,6 +1231,11 @@ function initPosterCarousel() {
 
   const updateButtons = () => {
     const maxScroll = Math.max(0, viewport.scrollWidth - viewport.clientWidth - 2);
+    const hasOverflow = maxScroll > 0;
+    const isScrolledFromStart = viewport.scrollLeft > 2;
+
+    carousel.classList.toggle("has-left-fade", hasOverflow && isScrolledFromStart);
+
     carousel.querySelectorAll("[data-poster-direction]").forEach((button) => {
       const direction = Number(button.dataset.posterDirection || 1);
       button.disabled = direction < 0 ? viewport.scrollLeft <= 2 : viewport.scrollLeft >= maxScroll;

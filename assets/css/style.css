@@ -3422,6 +3422,11 @@ body {
 .poster-carousel::before {
   inset: 0;
   background:
+    linear-gradient(270deg, #FFFFFF 0, rgba(255, 255, 255, 0.95) 1.2rem, rgba(255, 255, 255, 0) var(--poster-fade-x));
+}
+
+.poster-carousel.has-left-fade::before {
+  background:
     linear-gradient(90deg, #FFFFFF 0, rgba(255, 255, 255, 0.95) 1.2rem, rgba(255, 255, 255, 0) var(--poster-fade-x)),
     linear-gradient(270deg, #FFFFFF 0, rgba(255, 255, 255, 0.95) 1.2rem, rgba(255, 255, 255, 0) var(--poster-fade-x));
 }
