@@ -39,8 +39,8 @@
     <!-- Pretendard CDN: 정적 사이트에서 별도 설치 없이 한국어 웹폰트를 적용합니다. -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
     <link rel="stylesheet" href="assets/css/style.css?v=20260717-mobileui2" />
-    <script src="assets/js/liquid-glass-panel.js?v=20260716-cafe24" defer></script>
-    <script src="assets/js/main.js?v=20260717-mobileui2" defer></script>
+    <script src="assets/js/liquid-glass-panel.js?v=20260719-logo2" defer></script>
+    <script src="assets/js/main.js?v=20260719-logo2" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main">본문으로 바로가기</a>

@@ -21,7 +21,7 @@
     <link rel="apple-touch-icon" href="assets/images/gsj-thumbnail.png" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
     <link rel="stylesheet" href="assets/css/style.css?v=20260717-mobileui2" />
-    <script src="assets/js/main.js?v=20260717-mobileui2" defer></script>
+    <script src="assets/js/main.js?v=20260719-logo2" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main">본문으로 바로가기</a>

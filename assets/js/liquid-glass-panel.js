@@ -3805,9 +3805,8 @@
     }
   }
 
-  window.initGlassLogo = function initGlassLogo(selector = ".hero__logo-stage") {
-    document.querySelectorAll(selector).forEach((stage) => {
-      if (!stage.__glassLogo) stage.__glassLogo = new GlassLogo(stage);
-    });
-  };
+  // The previous animated hero mark has been retired in favor of the official
+  // static SVG logo. Keep the panel effects, but do not expose the old logo
+  // initializer to cached versions of main.js.
+  delete window.initGlassLogo;
 })();
