@@ -20,9 +20,9 @@
       content="과학, 수학, 정보 교과의 교육 환경 개선과 조합원의 권익 보호를 위한 과수정 교원노동조합 공식 웹사이트"
     />
     <meta property="og:url" content="https://smitu.kr/" />
-    <meta property="og:image" content="https://smitu.kr/assets/images/smitu-thumbnail.png" />
+    <meta property="og:image" content="https://smitu.kr/assets/images/gsj-thumbnail.png" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://smitu.kr/assets/images/smitu-thumbnail.png" />
+    <meta name="twitter:image" content="https://smitu.kr/assets/images/gsj-thumbnail.png" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -34,8 +34,8 @@
       }
     </script>
     <title>과수정 교원노동조합 | 과학·수학·정보 교과 노동조합</title>
-    <link rel="icon" href="assets/images/smitu-thumbnail.png" />
-    <link rel="apple-touch-icon" href="assets/images/smitu-thumbnail.png" />
+    <link rel="icon" href="assets/images/gsj-thumbnail.png" />
+    <link rel="apple-touch-icon" href="assets/images/gsj-thumbnail.png" />
     <!-- Pretendard CDN: 정적 사이트에서 별도 설치 없이 한국어 웹폰트를 적용합니다. -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
     <link rel="stylesheet" href="assets/css/style.css?v=20260717-mobileui2" />
@@ -48,7 +48,7 @@
     <!-- Sidebar -->
     <aside class="site-sidebar" aria-label="사이트 사이드바">
       <a class="site-logo" href="index.php#home" aria-label="과수정 교원노동조합 홈으로 이동">
-        <img class="site-logo__brand" src="assets/images/smitu-logo-full.png?v=20260716-logo" alt="" aria-hidden="true" />
+        <img class="site-logo__brand" src="assets/images/gsj-logo.svg?v=20260719-logo" alt="" aria-hidden="true" />
       </a>
 
       <button class="site-menu-button" type="button" aria-label="메뉴 열기" aria-controls="site-nav" aria-expanded="false">
@@ -89,8 +89,8 @@
             </p>
           </div>
           <div class="hero__visual">
-            <div class="hero__logo-stage" role="img" aria-label="푸른 유리 질감으로 표현된 과수정 로고 심볼">
-              <img class="hero__logo-fallback" src="assets/images/smitu-symbol-mask.png" alt="" aria-hidden="true" />
+            <div class="hero__logo-stage" role="img" aria-label="과수정 교원노동조합 로고">
+              <img class="hero__logo-fallback" src="assets/images/gsj-logo.svg?v=20260719-logo" alt="" aria-hidden="true" />
             </div>
           </div>
         </div>

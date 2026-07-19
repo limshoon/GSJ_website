@@ -1207,12 +1207,6 @@ function renderAllSections() {
   hydrateSectionGlassIcons();
 }
 
-function initGlassLogoHero() {
-  if (typeof window.initGlassLogo === "function") {
-    window.initGlassLogo(".hero__logo-stage");
-  }
-}
-
 function applyImageFallbacks() {
   document.querySelectorAll(".activity-card__image img, .board-list__preview img, .post-media img, .poster-card__image").forEach((image) => {
     image.addEventListener("error", () => {
@@ -1430,7 +1424,6 @@ function initBoardControls() {
 document.addEventListener("DOMContentLoaded", async () => {
   await loadSiteContent();
   renderAllSections();
-  initGlassLogoHero();
   applyImageFallbacks();
   initPosterCarousel();
   initSmoothScroll();

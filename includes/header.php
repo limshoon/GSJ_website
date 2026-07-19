@@ -13,8 +13,8 @@ function render_document_head(string $title, string $description = ''): void
     <meta name="robots" content="index, follow" />
     <meta name="theme-color" content="#1346FF" />
     <title><?= e($title) ?></title>
-    <link rel="icon" href="/assets/images/smitu-thumbnail.png" />
-    <link rel="apple-touch-icon" href="/assets/images/smitu-thumbnail.png" />
+    <link rel="icon" href="/assets/images/gsj-thumbnail.png" />
+    <link rel="apple-touch-icon" href="/assets/images/gsj-thumbnail.png" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
     <link rel="stylesheet" href="/assets/css/style.css?v=20260717-mobileui2" />
     <?php

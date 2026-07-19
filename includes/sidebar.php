@@ -16,7 +16,7 @@ function render_sidebar(string $active = 'home'): void
     ?>
     <aside class="site-sidebar" aria-label="사이트 사이드바">
       <a class="site-logo" href="/index.php#home" aria-label="과수정 교원노동조합 홈으로 이동">
-        <img class="site-logo__brand" src="/assets/images/smitu-logo-full.png?v=20260716-logo" alt="" aria-hidden="true" />
+        <img class="site-logo__brand" src="/assets/images/gsj-logo.svg?v=20260719-logo" alt="" aria-hidden="true" />
       </a>
       <nav class="site-nav" id="site-nav" aria-label="주요 메뉴">
         <ul class="site-nav__list">

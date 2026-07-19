@@ -19,12 +19,12 @@
       content="과수정 교원노동조합의 공지사항과 주요 안내를 확인할 수 있는 페이지"
     />
     <meta property="og:url" content="https://smitu.kr/notice.php" />
-    <meta property="og:image" content="https://smitu.kr/assets/images/smitu-thumbnail.png" />
+    <meta property="og:image" content="https://smitu.kr/assets/images/gsj-thumbnail.png" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://smitu.kr/assets/images/smitu-thumbnail.png" />
+    <meta name="twitter:image" content="https://smitu.kr/assets/images/gsj-thumbnail.png" />
     <title>공지사항 | 과수정 교원노동조합</title>
-    <link rel="icon" href="assets/images/smitu-thumbnail.png" />
-    <link rel="apple-touch-icon" href="assets/images/smitu-thumbnail.png" />
+    <link rel="icon" href="assets/images/gsj-thumbnail.png" />
+    <link rel="apple-touch-icon" href="assets/images/gsj-thumbnail.png" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
     <link rel="stylesheet" href="assets/css/style.css?v=20260717-mobileui2" />
     <script src="assets/js/main.js?v=20260717-mobileui2" defer></script>
@@ -34,7 +34,7 @@
 
     <aside class="site-sidebar" aria-label="사이트 사이드바">
       <a class="site-logo" href="index.php#home" aria-label="과수정 교원노동조합 홈으로 이동">
-        <img class="site-logo__brand" src="assets/images/smitu-logo-full.png?v=20260716-logo" alt="" aria-hidden="true" />
+        <img class="site-logo__brand" src="assets/images/gsj-logo.svg?v=20260719-logo" alt="" aria-hidden="true" />
       </a>
 
       <button class="site-menu-button" type="button" aria-label="메뉴 열기" aria-controls="site-nav" aria-expanded="false">

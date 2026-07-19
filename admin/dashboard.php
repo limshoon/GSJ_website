@@ -14,8 +14,8 @@ $csrfToken = csrf_token();
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex, nofollow" />
     <title>관리자 | 과수정 교원노동조합</title>
-    <link rel="icon" href="../assets/images/smitu-thumbnail.png" />
-    <link rel="apple-touch-icon" href="../assets/images/smitu-thumbnail.png" />
+    <link rel="icon" href="../assets/images/gsj-thumbnail.png" />
+    <link rel="apple-touch-icon" href="../assets/images/gsj-thumbnail.png" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
     <link rel="stylesheet" href="admin.css?v=20260717-posteradmin" />
     <meta name="csrf-token" content="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>" />
@@ -25,7 +25,7 @@ $csrfToken = csrf_token();
   <body class="admin-body">
     <aside class="admin-app-sidebar" aria-label="관리자 메뉴">
       <a class="admin-app-logo" href="../index.php" target="_blank" rel="noreferrer" aria-label="사이트 보기">
-        <img src="../assets/images/smitu-logo-full.png?v=20260716-logo" alt="SMITU 과수정 교원노동조합" />
+        <img src="../assets/images/gsj-logo.svg?v=20260719-logo" alt="과수정 교원노동조합" />
       </a>
 
       <nav class="admin-app-nav" aria-label="콘텐츠 관리">

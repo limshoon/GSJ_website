@@ -13,8 +13,8 @@ if (current_admin()) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex, nofollow" />
     <title>관리자 로그인 | 과수정 교원노동조합</title>
-    <link rel="icon" href="../assets/images/smitu-thumbnail.png" />
-    <link rel="apple-touch-icon" href="../assets/images/smitu-thumbnail.png" />
+    <link rel="icon" href="../assets/images/gsj-thumbnail.png" />
+    <link rel="apple-touch-icon" href="../assets/images/gsj-thumbnail.png" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
     <link rel="stylesheet" href="admin.css?v=20260716-cms-auth" />
     <script src="../assets/js/login.js?v=20260716-cms-auth" defer></script>
@@ -22,7 +22,7 @@ if (current_admin()) {
   <body class="auth-page">
     <main class="auth-shell">
       <a class="auth-logo" href="../index.php" aria-label="사이트로 돌아가기">
-        <img src="../assets/images/smitu-logo-full.png?v=20260716-logo" alt="SMITU 과수정 교원노동조합" />
+        <img src="../assets/images/gsj-logo.svg?v=20260719-logo" alt="과수정 교원노동조합" />
       </a>
 
       <section class="auth-panel" aria-labelledby="login-title">

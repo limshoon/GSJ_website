@@ -379,20 +379,6 @@ address {
   touch-action: pan-y;
 }
 
-.hero__logo-stage::after {
-  position: absolute;
-  right: 8%;
-  bottom: 9%;
-  left: 12%;
-  z-index: 0;
-  height: 9%;
-  border-radius: 50%;
-  background: rgba(59, 130, 246, 0.22);
-  filter: blur(34px);
-  content: "";
-  pointer-events: none;
-}
-
 .hero__logo-stage {
   position: absolute;
   inset: -7% -10% -9% -5%;
@@ -414,7 +400,7 @@ address {
 }
 
 .hero__logo-fallback {
-  filter: drop-shadow(0 24px 38px rgba(29, 78, 216, 0.18));
+  filter: none;
 }
 
 .hero-glass-logo-canvas {
